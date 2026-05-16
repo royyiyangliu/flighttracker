@@ -1,13 +1,13 @@
 {
   "queries": [
     {
-      "id": "PVG-NRT-RT-20250725-20250803",
+      "id": "PVG-NRT-RT-20260725-20260803",
       "label": "上海→东京 往返 (7/25出发 / 8/3返回)",
       "type": "roundtrip",
       "departure_id": "PVG",
       "arrival_id": "NRT",
-      "outbound_date": "2025-07-25",
-      "return_date": "2025-08-03",
+      "outbound_date": "2026-07-25",
+      "return_date": "2026-08-03",
       "airline_filter": "MU",
       "currency": "CNY"
     }
