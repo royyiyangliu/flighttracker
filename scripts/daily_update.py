@@ -101,24 +101,26 @@ async def scrape_price(query: dict) -> float | None:
             # 等待 JS 渲染和价格加载
             await page.wait_for_timeout(12000)
 
+            # 始终保存截图，供调试使用
+            debug_path = DATA_DIR / "debug_screenshot.png"
+            debug_path.parent.mkdir(parents=True, exist_ok=True)
+            await page.screenshot(path=str(debug_path), full_page=False)
+            print(f"  截图已保存: {debug_path}")
+
             # 优先使用 XHR 拦截到的价格
-            valid_xhr = [p for p in xhr_prices if 200 < p < 100000]
+            valid_xhr = [p for p in xhr_prices if 1000 < p < 100000]
             if valid_xhr:
                 result = min(valid_xhr)
                 print(f"  [XHR] 最低价: ¥{result}")
                 return result
 
-            # 备选：解析 DOM
+            # 备选：解析 DOM（国际往返票最低 ¥1000）
             result = await parse_dom_price(page, airline_name)
             if result:
                 print(f"  [DOM] 最低价: ¥{result}")
                 return result
 
-            # 调试：保存截图
-            debug_path = DATA_DIR / "debug_screenshot.png"
-            debug_path.parent.mkdir(parents=True, exist_ok=True)
-            await page.screenshot(path=str(debug_path))
-            print(f"  未找到价格，截图已保存至 {debug_path}")
+            print(f"  未找到有效价格")
             return None
 
         except Exception as e:
@@ -176,7 +178,7 @@ async def parse_dom_price(page, airline_name: str) -> float | None:
                 nums = re.findall(r'\d{3,6}', text)
                 for n in nums:
                     v = float(n)
-                    if 200 < v < 100000:
+                    if 1000 < v < 100000:  # 国际往返票最低 ¥1000
                         prices.append(v)
             if prices:
                 return min(prices)
@@ -191,7 +193,7 @@ async def parse_dom_price(page, airline_name: str) -> float | None:
             if idx >= 0:
                 snippet = body_text[max(0, idx - 100): idx + 600]
                 nums = re.findall(r'\b(\d{3,5})\b', snippet)
-                prices = [float(n) for n in nums if 200 < float(n) < 100000]
+                prices = [float(n) for n in nums if 1000 < float(n) < 100000]
                 if prices:
                     return min(prices)
         except Exception:
