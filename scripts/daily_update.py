@@ -181,34 +181,33 @@ async def set_dates_via_calendar(page: Page, outbound_dt: datetime, ret_dt) -> b
         # 保存截图（此时页面还是错误日期）
         await page.screenshot(path=str(DATA_DIR / "debug_calendar.png"))
 
-        # 取第一个可见的日期元素，尝试点击
-        visible = [el for el in date_elements if el.get("visible")]
-        if not visible:
-            print("  未找到可见的日期元素")
+        # 用已知的类名直接强制点击出发日期（headless 下 offsetWidth=0，需 force=True）
+        # 诊断输出中确认类名为 nh_d-departTime
+        known_date_selectors = [
+            ".nh_d-departTime",       # trip.com 出发日期（已确认）
+            "[class*='departTime']",
+            "[class*='depart-time']",
+        ]
+        clicked_sel = None
+        for sel in known_date_selectors:
+            try:
+                el = await page.query_selector(sel)
+                if el:
+                    await el.click(force=True)
+                    clicked_sel = sel
+                    print(f"  强制点击日期元素成功: {sel}")
+                    await page.wait_for_timeout(2000)
+                    break
+            except Exception as e:
+                print(f"  点击 {sel} 失败: {e}")
+                continue
+
+        if not clicked_sel:
+            print("  未能点击任何日期元素")
             return False
 
-        # 通过 JS 点击找到的第一个元素
-        clicked = await page.evaluate("""
-            () => {
-                const re = /(Mon|Tue|Wed|Thu|Fri|Sat|Sun),\\s+\\w+\\s+\\d+/;
-                const all = document.querySelectorAll('*');
-                for (const el of all) {
-                    if (el.children.length === 0 &&
-                        re.test(el.textContent.trim()) &&
-                        el.offsetWidth > 0) {
-                        el.click();
-                        return el.textContent.trim();
-                    }
-                }
-                return null;
-            }
-        """)
-        if not clicked:
-            print("  JS 点击日期元素失败")
-            return False
-
-        print(f"  JS 点击日期成功: {clicked}")
-        await page.wait_for_timeout(2000)
+        # 截图查看日历是否打开
+        await page.screenshot(path=str(DATA_DIR / "debug_calendar_open.png"))
 
         # 导航日历到目标月份并点击日期
         await navigate_to_month(page, outbound_dt)
