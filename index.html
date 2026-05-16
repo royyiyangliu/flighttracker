@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>机票价格追踪</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f4f6f9;
+      color: #1a1a2e;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #1a1a2e;
+      color: #fff;
+      padding: 20px 32px;
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+    }
+    header h1 { font-size: 1.4rem; font-weight: 600; }
+    header p  { font-size: 0.82rem; color: #8898aa; }
+
+    main { max-width: 1000px; margin: 0 auto; padding: 28px 20px; }
+
+    /* 价格卡片 */
+    .cards { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 28px; }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px 24px;
+      flex: 1 1 260px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.07);
+      border-left: 4px solid #4e73df;
+    }
+    .card-label  { font-size: 0.78rem; color: #8898aa; margin-bottom: 6px; }
+    .card-price  { font-size: 2rem; font-weight: 700; color: #1a1a2e; }
+    .card-price span { font-size: 1rem; font-weight: 400; color: #8898aa; margin-left: 4px; }
+    .card-change { font-size: 0.82rem; margin-top: 6px; }
+    .card-change.up   { color: #e74a3b; }
+    .card-change.down { color: #1cc88a; }
+    .card-change.flat { color: #8898aa; }
+    .card-date  { font-size: 0.75rem; color: #adb5bd; margin-top: 4px; }
+    .card.no-data { border-left-color: #d1d3e2; }
+    .card.no-data .card-price { font-size: 1.2rem; color: #adb5bd; }
+
+    /* 图表区域 */
+    .chart-section {
+      background: #fff;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.07);
+      margin-bottom: 24px;
+    }
+    .chart-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .chart-title { font-size: 0.95rem; font-weight: 600; }
+    .chart-subtitle { font-size: 0.78rem; color: #8898aa; }
+
+    .chart-wrap { position: relative; height: 280px; }
+
+    /* 更新时间 */
+    footer {
+      text-align: center;
+      font-size: 0.75rem;
+      color: #adb5bd;
+      padding: 12px 0 24px;
+    }
+
+    /* 加载/错误状态 */
+    .status-msg {
+      text-align: center;
+      padding: 60px 20px;
+      color: #8898aa;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>机票价格追踪</h1>
+  <p>数据每日自动更新 · 东八区 10:00</p>
+</header>
+
+<main id="app">
+  <div class="status-msg" id="loading">加载中…</div>
+</main>
+
+<footer id="footer"></footer>
+
+<script>
+const COLORS = ["#4e73df", "#1cc88a", "#36b9cc", "#f6c23e", "#e74a3b"];
+
+async function fetchJSON(path) {
+  const r = await fetch(path + "?v=" + Date.now());
+  if (!r.ok) throw new Error(path + " → " + r.status);
+  return r.json();
+}
+
+function fmtPrice(v, currency) {
+  if (v == null) return "—";
+  const sym = currency === "CNY" ? "¥" : (currency === "USD" ? "$" : currency + " ");
+  return sym + v.toLocaleString("zh-CN");
+}
+
+function buildCard(query, history) {
+  const prices  = history.prices;
+  const dates   = history.dates;
+  const latest  = prices.length ? prices[prices.length - 1] : null;
+  const prev    = prices.length >= 2 ? prices[prices.length - 2] : null;
+  const latestDate = dates.length ? dates[dates.length - 1] : null;
+  const currency   = history.currency || "CNY";
+
+  let changeHTML = "";
+  if (latest != null && prev != null) {
+    const diff = latest - prev;
+    const cls  = diff > 0 ? "up" : diff < 0 ? "down" : "flat";
+    const sign = diff > 0 ? "▲" : diff < 0 ? "▼" : "—";
+    changeHTML = `<div class="card-change ${cls}">${sign} ${Math.abs(diff).toLocaleString()} 较昨日</div>`;
+  }
+
+  const noData = latest == null;
+  return `
+    <div class="card ${noData ? "no-data" : ""}">
+      <div class="card-label">${query.label}</div>
+      <div class="card-price">
+        ${fmtPrice(latest, currency)}<span>${currency}</span>
+      </div>
+      ${changeHTML}
+      <div class="card-date">${latestDate ? "最新: " + latestDate : "暂无数据"}</div>
+    </div>`;
+}
+
+function buildChart(queries, histories, colorList) {
+  const allDates = [...new Set(
+    histories.flatMap(h => h.dates)
+  )].sort();
+
+  if (allDates.length === 0) return null;
+
+  const datasets = queries.map((q, i) => {
+    const h = histories[i];
+    const dataMap = Object.fromEntries(h.dates.map((d, j) => [d, h.prices[j]]));
+    return {
+      label: q.label,
+      data: allDates.map(d => dataMap[d] ?? null),
+      borderColor: colorList[i % colorList.length],
+      backgroundColor: colorList[i % colorList.length] + "22",
+      borderWidth: 2,
+      pointRadius: 4,
+      pointHoverRadius: 6,
+      fill: false,
+      spanGaps: false,
+      tension: 0.3,
+    };
+  });
+
+  return { labels: allDates, datasets };
+}
+
+async function main() {
+  const app     = document.getElementById("app");
+  const footer  = document.getElementById("footer");
+
+  let config;
+  try {
+    config = await fetchJSON("config.json");
+  } catch (e) {
+    app.innerHTML = `<div class="status-msg">无法加载配置文件: ${e.message}</div>`;
+    return;
+  }
+
+  const queries  = config.queries || [];
+  if (!queries.length) {
+    app.innerHTML = `<div class="status-msg">config.json 中尚未配置任何航线</div>`;
+    return;
+  }
+
+  // 并行加载所有历史数据
+  const histories = await Promise.all(queries.map(async (q) => {
+    try {
+      return await fetchJSON(`data/history/${q.id}.json`);
+    } catch {
+      return { id: q.id, label: q.label, currency: q.currency || "CNY", dates: [], prices: [] };
+    }
+  }));
+
+  // 渲染价格卡片
+  const cardsHTML = queries.map((q, i) => buildCard(q, histories[i])).join("");
+
+  // 渲染图表区域
+  const chartData = buildChart(queries, histories, COLORS);
+  const hasData   = chartData && chartData.labels.length > 0;
+
+  app.innerHTML = `
+    <div class="cards">${cardsHTML}</div>
+    <div class="chart-section">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">价格走势</div>
+          <div class="chart-subtitle">经济舱含税价格 · 点击图例可隐藏/显示某条航线</div>
+        </div>
+      </div>
+      ${hasData
+        ? `<div class="chart-wrap"><canvas id="priceChart"></canvas></div>`
+        : `<div class="status-msg">暂无历史数据，爬虫运行后将自动显示</div>`
+      }
+    </div>`;
+
+  if (hasData) {
+    new Chart(document.getElementById("priceChart"), {
+      type: "line",
+      data: chartData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: { position: "top", labels: { usePointStyle: true, padding: 16 } },
+          tooltip: {
+            callbacks: {
+              label: ctx => {
+                const h = histories[ctx.datasetIndex];
+                const sym = (h.currency || "CNY") === "CNY" ? "¥" : "$";
+                return ctx.parsed.y != null
+                  ? ` ${ctx.dataset.label}: ${sym}${ctx.parsed.y.toLocaleString()}`
+                  : ` ${ctx.dataset.label}: —`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: "#f0f0f0" },
+            ticks: { maxTicksLimit: 12, font: { size: 11 } }
+          },
+          y: {
+            grid: { color: "#f0f0f0" },
+            ticks: {
+              font: { size: 11 },
+              callback: v => "¥" + v.toLocaleString()
+            }
+          }
+        }
+      }
+    });
+  }
+
+  footer.textContent = "页面加载时间: " + new Date().toLocaleString("zh-CN");
+}
+
+main();
+</script>
+</body>
+</html>
