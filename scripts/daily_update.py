@@ -79,24 +79,43 @@ async def scrape_price(query: dict) -> float | None:
         page = await context.new_page()
 
         xhr_prices: list[float] = []
+        api_candidates: list[dict] = []  # 记录候选 API 端点
+
+        async def on_request(request):
+            url_l = request.url.lower()
+            if any(k in url_l for k in ("flight", "search", "ticket", "intl", "query")):
+                body = ""
+                try:
+                    body = request.post_data or ""
+                except Exception:
+                    pass
+                print(f"  [REQ] {request.method} {request.url[:120]}")
+                if body:
+                    print(f"  [REQ BODY] {body[:300]}")
 
         async def on_response(response):
             if response.status != 200:
                 return
-            if not any(k in response.url.lower() for k in ("flight", "search", "ticket", "intl")):
+            url_l = response.url.lower()
+            if not any(k in url_l for k in ("flight", "search", "ticket", "intl", "query")):
                 return
-            if "json" not in response.headers.get("content-type", ""):
+            ct = response.headers.get("content-type", "")
+            if "json" not in ct:
                 return
             try:
-                data = await response.json()
+                text = await response.text()
+                print(f"  [RESP] {response.url[:100]}")
+                print(f"  [RESP PREVIEW] {text[:400]}")
+                data = json.loads(text)
                 found = search_prices_in_json(data, airline_name)
                 if found:
-                    print(f"  [XHR] {response.url[:70]}")
-                    print(f"        → prices: {sorted(found)[:8]}")
+                    print(f"  [XHR PRICES] {sorted(found)[:8]}")
                     xhr_prices.extend(found)
+                    api_candidates.append({"url": response.url, "prices": found[:5]})
             except Exception:
                 pass
 
+        page.on("request", on_request)
         page.on("response", on_response)
 
         try:
