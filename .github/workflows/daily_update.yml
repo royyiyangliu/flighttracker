@@ -29,6 +29,14 @@ jobs:
       - name: Run scraper
         run: python scripts/daily_update.py
 
+      - name: Upload debug screenshot (if exists)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-screenshot
+          path: data/debug_screenshot.png
+          if-no-files-found: ignore
+
       - name: Commit and push data
         run: |
           git config user.name "github-actions[bot]"
