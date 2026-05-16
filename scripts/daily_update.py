@@ -156,32 +156,59 @@ async def scrape_price(query: dict) -> float | None:
 async def set_dates_via_calendar(page: Page, outbound_dt: datetime, ret_dt) -> bool:
     """通过点击页面日历控件来设置正确日期"""
     try:
-        # 找到并点击出发日期区域
-        date_selectors = [
-            "[class*='depart'][class*='date']",
-            "[class*='DepartDate']",
-            "[class*='depart-date']",
-            "[class*='trip-date'] [class*='depart']",
-            "span[class*='Date']:first-child",
-        ]
-        clicked = False
-        for sel in date_selectors:
-            try:
-                el = await page.wait_for_selector(sel, timeout=3000)
-                if el:
-                    await el.click()
-                    await page.wait_for_timeout(1500)
-                    clicked = True
-                    print(f"  点击日期区域成功: {sel}")
-                    break
-            except Exception:
-                continue
+        # 用 JS 找所有含日期文本（如 "Mon, May 18"）的叶节点元素
+        date_elements = await page.evaluate("""
+            () => {
+                const re = /(Mon|Tue|Wed|Thu|Fri|Sat|Sun),\\s+\\w+\\s+\\d+/;
+                const results = [];
+                const all = document.querySelectorAll('*');
+                for (const el of all) {
+                    if (el.children.length === 0 && re.test(el.textContent.trim())) {
+                        results.push({
+                            text: el.textContent.trim().slice(0, 40),
+                            tag: el.tagName,
+                            cls: el.className.toString().slice(0, 80),
+                            visible: el.offsetWidth > 0 && el.offsetHeight > 0
+                        });
+                        if (results.length >= 8) break;
+                    }
+                }
+                return results;
+            }
+        """)
+        print(f"  页面日期元素: {json.dumps(date_elements, ensure_ascii=False)}")
 
-        if not clicked:
-            # 截一下中间过程截图
-            print("  未找到日期选择器，保存中间截图")
-            await page.screenshot(path=str(DATA_DIR / "debug_calendar.png"))
+        # 保存截图（此时页面还是错误日期）
+        await page.screenshot(path=str(DATA_DIR / "debug_calendar.png"))
+
+        # 取第一个可见的日期元素，尝试点击
+        visible = [el for el in date_elements if el.get("visible")]
+        if not visible:
+            print("  未找到可见的日期元素")
             return False
+
+        # 通过 JS 点击找到的第一个元素
+        clicked = await page.evaluate("""
+            () => {
+                const re = /(Mon|Tue|Wed|Thu|Fri|Sat|Sun),\\s+\\w+\\s+\\d+/;
+                const all = document.querySelectorAll('*');
+                for (const el of all) {
+                    if (el.children.length === 0 &&
+                        re.test(el.textContent.trim()) &&
+                        el.offsetWidth > 0) {
+                        el.click();
+                        return el.textContent.trim();
+                    }
+                }
+                return null;
+            }
+        """)
+        if not clicked:
+            print("  JS 点击日期元素失败")
+            return False
+
+        print(f"  JS 点击日期成功: {clicked}")
+        await page.wait_for_timeout(2000)
 
         # 导航日历到目标月份并点击日期
         await navigate_to_month(page, outbound_dt)
