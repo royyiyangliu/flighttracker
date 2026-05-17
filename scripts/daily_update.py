@@ -285,6 +285,36 @@ async def scrape_price(query: dict) -> float | None:
             viewport={"width": 1440, "height": 900},
             locale="en-US",
         )
+        # 加载 cookies（来自 GitHub Secret，避免触发 CAPTCHA）
+        cookies_path = BASE_DIR / "cookies.json"
+        if cookies_path.exists():
+            try:
+                raw = json.loads(cookies_path.read_text(encoding="utf-8"))
+                # 兼容 Cookie Editor 导出格式：expirationDate → expires
+                playwright_cookies = []
+                for c in raw:
+                    cookie = {
+                        "name":     c.get("name", ""),
+                        "value":    c.get("value", ""),
+                        "domain":   c.get("domain", ".trip.com"),
+                        "path":     c.get("path", "/"),
+                        "httpOnly": c.get("httpOnly", False),
+                        "secure":   c.get("secure", False),
+                        "sameSite": c.get("sameSite", "Lax"),
+                    }
+                    exp = c.get("expirationDate") or c.get("expires")
+                    if exp and float(exp) > 0:
+                        cookie["expires"] = float(exp)
+                    if cookie["name"] and cookie["value"]:
+                        playwright_cookies.append(cookie)
+                if playwright_cookies:
+                    await context.add_cookies(playwright_cookies)
+                    print(f"  已加载 {len(playwright_cookies)} 个 cookies")
+            except Exception as e:
+                print(f"  cookies 加载失败: {e}")
+        else:
+            print("  未找到 cookies.json，以匿名模式运行")
+
         page = await context.new_page()
 
         # showfarefirst URL 已携带正确日期和货币，无需路由拦截

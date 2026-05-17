@@ -26,6 +26,10 @@ jobs:
           pip install playwright
           playwright install chromium --with-deps
 
+      - name: Write cookies file
+        if: ${{ secrets.TRIP_COM_COOKIES != '' }}
+        run: echo '${{ secrets.TRIP_COM_COOKIES }}' > cookies.json
+
       - name: Run scraper
         run: python scripts/daily_update.py
 
