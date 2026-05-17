@@ -236,28 +236,27 @@ async def scrape_price(query: dict) -> float | None:
             print(f"  页面加载完毕，等待搜索结果（25s）…")
             await page.wait_for_timeout(25000)
 
-            # 确认路由拦截是否触发
+            # 路由拦截结果报告
             if route_triggered[0]:
-                print(f"  ✓ FlightListSearchSSE 已拦截，日期已替换为 {outbound}")
+                print(f"  ✓ FlightListSearchSSE 已拦截并替换日期为 {outbound}")
+                # 路由拦截成功 → 数据已是正确日期，不清空价格、不触发日历交互
             else:
-                print(f"  ✗ FlightListSearchSSE 未被拦截（可能尚未触发）")
+                print(f"  ✗ FlightListSearchSSE 未拦截，尝试 JS 日历交互…")
+                # 仅在路由未触发时，才尝试日历操作
+                page_text = await page.inner_text("body")
+                months_found = re.findall(
+                    r"(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4}",
+                    page_text,
+                )
+                print(f"  页面显示月份: {list(set(months_found))[:10]}")
 
-            # 检查页面显示的日期月份
-            page_text = await page.inner_text("body")
-            months_found = re.findall(
-                r"(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4}",
-                page_text,
-            )
-            print(f"  页面显示月份: {list(set(months_found))[:10]}")
-
-            target_month = outbound_dt.strftime("%b")  # "Jul"
-            target_year = str(outbound_dt.year)
-            if target_month not in page_text or target_year not in page_text:
-                print(f"  ⚠ 页面未显示目标月份 {target_month} {target_year}，尝试 JS 日历交互…")
-                xhr_prices.clear()
-                await set_dates_via_js(page, outbound_dt, ret_dt)
-                print(f"  日历交互完成，等待搜索结果…")
-                await page.wait_for_timeout(15000)
+                target_month = outbound_dt.strftime("%b")
+                target_year = str(outbound_dt.year)
+                if target_month not in page_text or target_year not in page_text:
+                    xhr_prices.clear()
+                    await set_dates_via_js(page, outbound_dt, ret_dt)
+                    print(f"  日历交互完成，等待搜索结果…")
+                    await page.wait_for_timeout(15000)
 
             # 保存截图
             await page.screenshot(path=str(DATA_DIR / "debug_screenshot.png"))
