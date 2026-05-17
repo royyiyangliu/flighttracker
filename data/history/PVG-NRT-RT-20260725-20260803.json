@@ -2,7 +2,47 @@
   "id": "PVG-NRT-RT-20260725-20260803",
   "label": "上海→东京 往返 (7/25出发 / 8/3返回)",
   "currency": "CNY",
-  "flight_info": {},
-  "timestamps": [],
-  "prices": {}
+  "flight_info": {
+    "MU727": {
+      "depTime": "08:05",
+      "arrTime": "12:00",
+      "aircraft": "空客332(宽)",
+      "direct": true
+    },
+    "MU523": {
+      "depTime": "09:05",
+      "arrTime": "12:50",
+      "aircraft": "空客359(宽)",
+      "direct": true
+    },
+    "MU521": {
+      "depTime": "11:45",
+      "arrTime": "15:55",
+      "aircraft": "空客333(宽)",
+      "direct": true
+    },
+    "MU271": {
+      "depTime": "17:05",
+      "arrTime": "20:55",
+      "aircraft": "",
+      "direct": true
+    }
+  },
+  "timestamps": [
+    "2026-05-17T08:00"
+  ],
+  "prices": {
+    "MU271": [
+      3955
+    ],
+    "MU523": [
+      4125
+    ],
+    "MU727": [
+      3955
+    ],
+    "MU521": [
+      3955
+    ]
+  }
 }
