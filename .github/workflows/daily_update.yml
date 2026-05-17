@@ -27,8 +27,15 @@ jobs:
           playwright install chromium --with-deps
 
       - name: Write cookies file
-        if: ${{ secrets.TRIP_COM_COOKIES != '' }}
-        run: echo '${{ secrets.TRIP_COM_COOKIES }}' > cookies.json
+        env:
+          TRIP_COM_COOKIES: ${{ secrets.TRIP_COM_COOKIES }}
+        run: |
+          if [ -n "$TRIP_COM_COOKIES" ]; then
+            echo "$TRIP_COM_COOKIES" > cookies.json
+            echo "cookies.json 已写入"
+          else
+            echo "未配置 TRIP_COM_COOKIES secret，跳过"
+          fi
 
       - name: Run scraper
         run: python scripts/daily_update.py
