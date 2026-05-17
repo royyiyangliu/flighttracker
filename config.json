@@ -11,7 +11,8 @@
       "airline_filter": "MU",
       "currency": "CNY",
       "quantity": 1,
-      "cabin": "y"
+      "cabin": "y",
+      "source": "ceair"
     }
   ]
 }
