@@ -6,7 +6,8 @@ from pathlib import Path
 from playwright.async_api import async_playwright, Page
 
 try:
-    from playwright_stealth import stealth_async
+    from playwright_stealth import Stealth as _Stealth
+    _stealth_instance = _Stealth()
     HAS_STEALTH = True
 except ImportError:
     HAS_STEALTH = False
@@ -298,7 +299,7 @@ async def scrape_price(query: dict) -> float | None:
 
         # 应用 stealth 补丁：隐藏 navigator.webdriver / plugins 等指纹，绕过 trip.com 反爬
         if HAS_STEALTH:
-            await stealth_async(page)
+            await _stealth_instance.apply_stealth_async(page)
             print("  [stealth] 已应用 playwright-stealth 补丁")
         else:
             print("  [stealth] 未安装 playwright-stealth，以普通 headless 模式运行")
