@@ -9,7 +9,9 @@
       "outbound_date": "2026-07-25",
       "return_date": "2026-08-03",
       "airline_filter": "MU",
-      "currency": "USD"
+      "currency": "CNY",
+      "quantity": 1,
+      "cabin": "y"
     }
   ]
 }

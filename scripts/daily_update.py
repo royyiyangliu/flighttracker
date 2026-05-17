@@ -9,16 +9,17 @@ BASE_DIR = Path(__file__).parent.parent
 CONFIG_PATH = BASE_DIR / "config.json"
 DATA_DIR = BASE_DIR / "data" / "history"
 
-CITY_MAP = {
-    "PVG": "shanghai", "SHA": "shanghai",
-    "NRT": "tokyo",    "HND": "tokyo",
-    "PEK": "beijing",  "PKX": "beijing",
-    "CAN": "guangzhou","CTU": "chengdu",
-    "ICN": "seoul",    "HKG": "hong-kong",
-    "SIN": "singapore","BKK": "bangkok",
-    "LHR": "london",   "CDG": "paris",
-    "JFK": "new-york", "LAX": "los-angeles",
-    "SYD": "sydney",   "DXB": "dubai",
+# 机场代码 → trip.com 城市代码（用于 showfarefirst URL 参数）
+AIRPORT_TO_CITY = {
+    "PVG": "sha", "SHA": "sha",
+    "NRT": "tyo", "HND": "tyo",
+    "PEK": "bjs", "PKX": "bjs",
+    "CAN": "can", "CTU": "ctu",
+    "ICN": "sel", "HKG": "hkg",
+    "SIN": "sin", "BKK": "bkk",
+    "LHR": "lon", "CDG": "par",
+    "JFK": "nyc", "EWR": "nyc", "LGA": "nyc",
+    "LAX": "lax", "SYD": "syd", "DXB": "dxb",
 }
 
 AIRLINE_NAME_MAP = {
@@ -33,19 +34,34 @@ AIRLINE_NAME_MAP = {
 
 
 def build_url(query: dict) -> str:
+    """
+    使用 showfarefirst 端点构造 URL。
+    该端点完整支持 ddate/rdate/curr 等参数，
+    比旧版 /tickets-xxx/ 路径更可靠。
+    """
     dep = query["departure_id"].upper()
     arr = query["arrival_id"].upper()
-    dep_city = CITY_MAP.get(dep, dep.lower())
-    arr_city = CITY_MAP.get(arr, arr.lower())
+    dep_city = AIRPORT_TO_CITY.get(dep, dep[:3].lower())
+    arr_city = AIRPORT_TO_CITY.get(arr, arr[:3].lower())
     outbound = query["outbound_date"]
-    base = (
-        f"https://us.trip.com/flights/{dep_city}-to-{arr_city}/"
-        f"tickets-{dep.lower()}-{arr.lower()}/"
+    currency = query.get("currency", "CNY")
+    quantity = query.get("quantity", 1)
+    triptype = "rt" if query["type"] == "roundtrip" else "ow"
+    cabin = query.get("cabin", "y")  # y=经济, c=商务, f=头等, s=超经
+
+    params = (
+        f"?dcity={dep_city}&acity={arr_city}"
+        f"&ddate={outbound}"
+        f"&dairport={dep.lower()}&aairport={arr.lower()}"
+        f"&triptype={triptype}&class={cabin}"
+        f"&quantity={quantity}"
+        f"&nonstoponly=off&locale=en-US&curr={currency}"
+        f"&lowpricesource=searchform&searchboxarg=t"
     )
-    params = f"?depdate={outbound}&class=y&quantity=1"
     if query["type"] == "roundtrip":
-        params += f"&retdate={query['return_date']}"
-    return base + params
+        params += f"&rdate={query['return_date']}"
+
+    return "https://us.trip.com/flights/showfarefirst" + params
 
 
 def extract_from_middle_search(
