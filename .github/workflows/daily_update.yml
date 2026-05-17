@@ -2,8 +2,9 @@ name: Daily Flight Price Update
 
 on:
   schedule:
-    - cron: '0 2 * * *'   # 每天 02:00 UTC = 北京时间 10:00
-  workflow_dispatch:        # 支持手动触发
+    - cron: '0 2 * * *'    # 北京时间 10:00
+    - cron: '0 14 * * *'   # 北京时间 22:00
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -26,17 +27,6 @@ jobs:
           pip install playwright playwright-stealth
           playwright install chromium --with-deps
 
-      - name: Write cookies file
-        env:
-          TRIP_COM_COOKIES: ${{ secrets.TRIP_COM_COOKIES }}
-        run: |
-          if [ -n "$TRIP_COM_COOKIES" ]; then
-            echo "$TRIP_COM_COOKIES" > cookies.json
-            echo "cookies.json 已写入"
-          else
-            echo "未配置 TRIP_COM_COOKIES secret，跳过"
-          fi
-
       - name: Run scraper
         run: python scripts/daily_update.py
 
@@ -53,5 +43,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/
-          git diff --staged --quiet || git commit -m "Daily update $(date -u +%Y-%m-%d)"
+          git diff --staged --quiet || git commit -m "Price update $(date -u +%Y-%m-%d\ %H:%M) UTC"
           git push

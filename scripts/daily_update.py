@@ -1,6 +1,5 @@
 import asyncio
 import json
-import re
 from datetime import datetime, timezone
 from pathlib import Path
 from playwright.async_api import async_playwright, Page
@@ -12,119 +11,79 @@ try:
 except ImportError:
     HAS_STEALTH = False
 
-BASE_DIR = Path(__file__).parent.parent
+BASE_DIR    = Path(__file__).parent.parent
 CONFIG_PATH = BASE_DIR / "config.json"
-DATA_DIR = BASE_DIR / "data" / "history"
+DATA_DIR    = BASE_DIR / "data" / "history"
 
-AIRLINE_NAME_MAP = {
-    "MU": "中国东方航空",
-    "CA": "中国国际航空",
-    "CZ": "中国南方航空",
-    "MF": "厦门航空",
-    "NH": "全日空",
-    "JL": "日本航空",
-}
 
-# ── ceair.com URL 构造 ────────────────────────────────────────────
+# ── URL 构造 ──────────────────────────────────────────────────────
 def build_ceair_url(query: dict) -> str:
-    """
-    东航官网往返查询 URL:
-    https://www.ceair.com/zh/cny/shopping/roundtrip/{DEP}-{ARR}/{outbound},{return}
-    """
-    dep = query["departure_id"].upper()
-    arr = query["arrival_id"].upper()
+    dep      = query["departure_id"].upper()
+    arr      = query["arrival_id"].upper()
     outbound = query["outbound_date"]
-    ret = query.get("return_date", "")
-    lang = "zh"
-    curr = query.get("currency", "CNY").lower()
+    ret      = query.get("return_date", "")
+    curr     = query.get("currency", "CNY").lower()
     triptype = "roundtrip" if query["type"] == "roundtrip" else "oneway"
-
     if triptype == "roundtrip" and ret:
-        return f"https://www.ceair.com/{lang}/{curr}/shopping/{triptype}/{dep}-{arr}/{outbound},{ret}"
-    else:
-        return f"https://www.ceair.com/{lang}/{curr}/shopping/{triptype}/{dep}-{arr}/{outbound}"
+        return f"https://www.ceair.com/zh/{curr}/shopping/{triptype}/{dep}-{arr}/{outbound},{ret}"
+    return f"https://www.ceair.com/zh/{curr}/shopping/{triptype}/{dep}-{arr}/{outbound}"
 
 
-# ── DOM 解析：从页面提取航班+价格 ─────────────────────────────────
+# ── DOM 提取 JS（只提取 MU 航班，不含 FM 共享）────────────────────
 DOM_EXTRACT_JS = """
 () => {
-    // 遍历文本节点，找价格数字（3~5位），再向上找含航班号的祖先
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     const seen = new Set();
     const flights = [];
     let node;
     while (node = walker.nextNode()) {
         const t = node.textContent.trim();
-        // 匹配纯数字或带逗号的价格（500-99999）
-        if (!/^[\d,]{3,7}$/.test(t)) continue;
+        if (!/^[\\d,]{4,6}$/.test(t)) continue;
         const num = parseInt(t.replace(/,/g, ''));
         if (num < 500 || num > 99999) continue;
         let ctx = node.parentElement;
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 12; i++) {
             if (!ctx) break;
             const full = ctx.innerText || '';
-            const flightMatch = full.match(/([A-Z]{2})\s*(\d{3,4})/);
-            const priceMatch = full.match(/[¥￥]\s*([\d,]+)/g);
-            if (flightMatch && priceMatch) {
-                const airline = flightMatch[1];
-                const flightNo = flightMatch[1] + flightMatch[2];
-                const price = parseInt(priceMatch[0].replace(/[¥￥,\s]/g, ''));
-                const key = flightNo + '|' + price;
-                if (!seen.has(key) && price > 500) {
-                    seen.add(key);
-                    flights.push({ airline, flightNo, price });
-                }
-                break;
-            }
-            ctx = ctx.parentElement;
+            const lines = full.split('\\n')
+                .map(l => l.trim())
+                .filter(l => l && l !== '—' && l !== '— —');
+            if (!lines.length) { ctx = ctx.parentElement; continue; }
+            const fm = lines[0].match(/^(MU)(\\d{3,4})$/);
+            if (!fm || !full.includes('¥')) { ctx = ctx.parentElement; continue; }
+            const key = lines[0];
+            if (seen.has(key)) break;
+            seen.add(key);
+            const times      = lines.filter(l => /^\\d{2}:\\d{2}$/.test(l));
+            const priceLines = lines.filter(l => /^¥\\s*[\\d,]+$/.test(l));
+            const prices     = priceLines.map(l => parseInt(l.replace(/[¥\\s,]/g, '')));
+            const aircraft   = lines.find(l => /空客|波音/i.test(l)) || '';
+            flights.push({
+                flightNo: fm[1] + fm[2],
+                depTime:  times[0] || null,
+                arrTime:  times[1] || null,
+                aircraft: aircraft,
+                direct:   lines.includes('直达'),
+                price:    prices[0] || null,
+            });
+            break;
         }
     }
     return flights;
 }
 """
 
-async def parse_ceair_dom(page: Page, airline_filter: str) -> tuple[list[float], list[float]]:
-    """
-    从 ceair.com 页面 DOM 提取航班价格。
-    返回 (airline_prices, all_prices)
-    airline_filter: 目标航司代码（如 "MU"）
-    """
-    flights = await page.evaluate(DOM_EXTRACT_JS)
-    airline_prices = []
-    all_prices = []
-
-    for f in flights:
-        airline = f.get("airline", "")
-        flight_no = f.get("flightNo", "")
-        price = f.get("price")
-        if not price:
-            continue
-        tag = "★" if airline == airline_filter else " "
-        print(f"  [DOM]{tag} {flight_no:8s}  ¥{price:,}")
-        all_prices.append(float(price))
-        if airline == airline_filter:
-            airline_prices.append(float(price))
-
-    return airline_prices, all_prices
-
 
 # ── 主抓取函数 ────────────────────────────────────────────────────
-async def scrape_price(query: dict) -> float | None:
-    source = query.get("source", "ceair")
-    airline_code = query.get("airline_filter", "").upper()
-    airline_name = AIRLINE_NAME_MAP.get(airline_code, airline_code)
+async def scrape_flights(query: dict) -> list[dict]:
+    """抓取 ceair.com，返回 MU 航班列表（每项含航班详情+价格）"""
+    url          = build_ceair_url(query)
+    airline_code = query.get("airline_filter", "MU").upper()
 
-    if source == "ceair":
-        url = build_ceair_url(query)
-    else:
-        raise ValueError(f"未知 source: {source}")
+    print(f"  URL: {url}")
 
-    print(f"  来源: {source}")
-    print(f"  URL:  {url}")
-    print(f"  目标航司: {airline_code} ({airline_name})")
-
-    screenshot_path = DATA_DIR / "debug_screenshot.png"
     DATA_DIR.mkdir(parents=True, exist_ok=True)
+    screenshot_path = DATA_DIR / "debug_screenshot.png"
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(
@@ -142,19 +101,15 @@ async def scrape_price(query: dict) -> float | None:
         )
         page = await context.new_page()
 
-        # 应用 stealth 补丁，规避 navigator.webdriver 等指纹检测
         if HAS_STEALTH:
             await _stealth_instance.apply_stealth_async(page)
             print("  [stealth] 已应用补丁")
-        else:
-            print("  [stealth] 未安装，以普通 headless 运行")
 
         try:
-            print(f"  正在加载页面…")
             await page.goto(url, wait_until="domcontentloaded", timeout=60000)
 
-            # 等待航班价格出现：最多等 30 秒
-            print(f"  等待航班价格加载（最多30秒）…")
+            # 等待价格数字出现，最多 30 秒
+            print("  等待价格加载…")
             try:
                 await page.wait_for_function(
                     """() => {
@@ -175,30 +130,28 @@ async def scrape_price(query: dict) -> float | None:
             except Exception:
                 print("  ⚠ 等待超时，仍尝试解析")
 
-            # 额外等待 3 秒让所有航班渲染完毕
-            await page.wait_for_timeout(3000)
+            await page.wait_for_timeout(2000)
 
-            # 提取航班价格
-            airline_prices, all_prices = await parse_ceair_dom(page, airline_code)
-            print(f"  共找到 {len(all_prices)} 个价格，其中 {airline_code} {len(airline_prices)} 个")
-
-            # 截图留存
+            flights = await page.evaluate(DOM_EXTRACT_JS)
             await page.screenshot(path=str(screenshot_path))
-            print(f"  截图已保存")
 
-            currency = query.get("currency", "CNY")
+            # 只保留目标航司（MU）
+            flights = [f for f in flights if f.get("flightNo", "").startswith(airline_code)]
 
-            if airline_prices:
-                result = min(airline_prices)
-                print(f"  [★{airline_code} 最低价] ¥{result:,.0f} {currency}")
-                return result
-            if all_prices:
-                result = min(all_prices)
-                print(f"  [全航司最低价] ¥{result:,.0f} {currency}")
-                return result
+            if flights:
+                print(f"  共解析 {len(flights)} 个 {airline_code} 航班：")
+                for f in flights:
+                    tag = "★"
+                    print(f"    {tag} {f['flightNo']:8s}  "
+                          f"{f['depTime'] or '?'}→{f['arrTime'] or '?'}  "
+                          f"{f['aircraft']:12s}  ¥{f['price']:,}" if f['price'] else
+                          f"    {tag} {f['flightNo']:8s}  "
+                          f"{f['depTime'] or '?'}→{f['arrTime'] or '?'}  "
+                          f"{f['aircraft']:12s}  价格未知")
+            else:
+                print("  未解析到任何 MU 航班")
 
-            print("  未找到有效价格")
-            return None
+            return flights
 
         except Exception as e:
             print(f"  错误: {e}")
@@ -206,39 +159,98 @@ async def scrape_price(query: dict) -> float | None:
                 await page.screenshot(path=str(screenshot_path))
             except Exception:
                 pass
-            return None
+            return []
         finally:
             await browser.close()
 
 
-# ── 历史记录更新 ──────────────────────────────────────────────────
-def update_history(query: dict, price: float | None):
+# ── 历史记录更新（新格式）────────────────────────────────────────
+def update_history(query: dict, flights: list[dict]):
+    """
+    数据格式：
+    {
+      "id": ..., "label": ..., "currency": ...,
+      "flight_info": { "MU727": {"depTime","arrTime","aircraft","direct"}, ... },
+      "timestamps":  ["2026-05-17T02:00", ...],   // UTC，截断到整点
+      "prices":      { "MU727": [3955, null, ...], ... }
+    }
+    timestamps 与 prices 各数组等长。
+    """
+    if not flights:
+        print("  无航班数据，跳过历史更新")
+        return
+
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     path = DATA_DIR / f"{query['id']}.json"
 
+    # 读取或初始化（兼容旧格式：检测是否有 timestamps）
+    history = None
     if path.exists():
-        with open(path, encoding="utf-8") as f:
-            history = json.load(f)
-    else:
+        try:
+            with open(path, encoding="utf-8") as f:
+                raw = json.load(f)
+            if "timestamps" in raw and isinstance(raw.get("prices"), dict):
+                history = raw
+            else:
+                print("  检测到旧格式，重置为新格式")
+        except Exception:
+            pass
+
+    if history is None:
         history = {
-            "id": query["id"],
-            "label": query["label"],
-            "type": query["type"],
-            "currency": query.get("currency", "CNY"),
-            "dates": [],
-            "prices": [],
+            "id":          query["id"],
+            "label":       query["label"],
+            "currency":    query.get("currency", "CNY"),
+            "flight_info": {},
+            "timestamps":  [],
+            "prices":      {},
         }
 
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    if today in history["dates"]:
-        history["prices"][history["dates"].index(today)] = price
+    # 当前 UTC 时间，截断到整点（避免重复记录）
+    now_ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:00")
+    n      = len(history["timestamps"])
+
+    if now_ts in history["timestamps"]:
+        # 同一小时内重跑：更新已有条目
+        idx = history["timestamps"].index(now_ts)
+        for f in flights:
+            fn = f["flightNo"]
+            if fn not in history["prices"]:
+                history["prices"][fn] = [None] * n
+            history["prices"][fn][idx] = f["price"]
+        print(f"  更新已有时间点 [{now_ts}]（第 {idx+1} 条）")
     else:
-        history["dates"].append(today)
-        history["prices"].append(price)
+        # 新时间点：追加
+        history["timestamps"].append(now_ts)
+        flight_map    = {f["flightNo"]: f for f in flights}
+        all_flight_nos = set(history["prices"].keys()) | set(flight_map.keys())
+
+        for fn in all_flight_nos:
+            if fn not in history["prices"]:
+                # 新出现的航班：补 None 占位
+                history["prices"][fn] = [None] * n
+            price = flight_map.get(fn, {}).get("price")
+            history["prices"][fn].append(price)
+
+        print(f"  追加新时间点 [{now_ts}]，共 {len(history['timestamps'])} 条记录")
+
+    # 更新航班静态信息（优先使用非空值）
+    for f in flights:
+        fn       = f["flightNo"]
+        existing = history["flight_info"].get(fn, {})
+        history["flight_info"][fn] = {
+            "depTime":  f.get("depTime")  or existing.get("depTime", ""),
+            "arrTime":  f.get("arrTime")  or existing.get("arrTime", ""),
+            "aircraft": f.get("aircraft") or existing.get("aircraft", ""),
+            "direct":   f.get("direct", True),
+        }
 
     with open(path, "w", encoding="utf-8") as f:
         json.dump(history, f, ensure_ascii=False, indent=2)
-    print(f"  历史已更新，共 {len(history['dates'])} 条记录")
+
+    n_ts = len(history["timestamps"])
+    n_fl = len(history["prices"])
+    print(f"  已保存：{n_ts} 个时间点 × {n_fl} 条航班")
 
 
 # ── 入口 ──────────────────────────────────────────────────────────
@@ -249,9 +261,8 @@ async def main():
     for query in config["queries"]:
         print(f"\n{'=' * 55}")
         print(f"航线: {query['label']}")
-        price = await scrape_price(query)
-        print(f"最终价格: {price}")
-        update_history(query, price)
+        flights = await scrape_flights(query)
+        update_history(query, flights)
 
     print(f"\n{'=' * 55}")
     print("全部完成")

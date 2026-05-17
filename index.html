@@ -3,54 +3,121 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>机票价格追踪</title>
+  <title>东航机票价格追踪</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #f4f6f9;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #f0f2f5;
       color: #1a1a2e;
       min-height: 100vh;
     }
 
+    /* ── 顶部 Header ── */
     header {
-      background: #1a1a2e;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
       color: #fff;
-      padding: 20px 32px;
-      display: flex;
-      align-items: baseline;
-      gap: 16px;
+      padding: 24px 32px 20px;
     }
-    header h1 { font-size: 1.4rem; font-weight: 600; }
-    header p  { font-size: 0.82rem; color: #8898aa; }
+    .header-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .header-title { font-size: 1.35rem; font-weight: 700; letter-spacing: .02em; }
+    .header-sub   { font-size: 0.78rem; color: #8898aa; margin-top: 4px; }
 
-    main { max-width: 1000px; margin: 0 auto; padding: 28px 20px; }
+    /* 路线信息条 */
+    .route-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0;
+      background: rgba(255,255,255,.06);
+      border-radius: 10px;
+      padding: 12px 20px;
+    }
+    .route-item {
+      display: flex;
+      flex-direction: column;
+      padding: 0 20px;
+      border-right: 1px solid rgba(255,255,255,.12);
+    }
+    .route-item:first-child { padding-left: 0; }
+    .route-item:last-child  { border-right: none; }
+    .route-key   { font-size: 0.68rem; color: #8898aa; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 3px; }
+    .route-val   { font-size: 0.9rem;  color: #e0e6f0; font-weight: 500; }
+    .route-arrow { font-size: 1.1rem; color: #4e73df; margin: 0 6px; align-self: center; }
 
-    /* 价格卡片 */
-    .cards { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 28px; }
+    /* ── 主内容 ── */
+    main { max-width: 1100px; margin: 0 auto; padding: 28px 20px; }
 
-    .card {
+    /* 航班卡片网格 */
+    .flights-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .flight-card {
       background: #fff;
       border-radius: 12px;
-      padding: 20px 24px;
-      flex: 1 1 260px;
+      padding: 18px 20px;
       box-shadow: 0 1px 4px rgba(0,0,0,.07);
-      border-left: 4px solid #4e73df;
+      border-top: 3px solid #4e73df;
+      position: relative;
     }
-    .card-label  { font-size: 0.78rem; color: #8898aa; margin-bottom: 6px; }
-    .card-price  { font-size: 2rem; font-weight: 700; color: #1a1a2e; }
-    .card-price span { font-size: 1rem; font-weight: 400; color: #8898aa; margin-left: 4px; }
-    .card-change { font-size: 0.82rem; margin-top: 6px; }
-    .card-change.up   { color: #e74a3b; }
-    .card-change.down { color: #1cc88a; }
-    .card-change.flat { color: #8898aa; }
-    .card-date  { font-size: 0.75rem; color: #adb5bd; margin-top: 4px; }
-    .card.no-data { border-left-color: #d1d3e2; }
-    .card.no-data .card-price { font-size: 1.2rem; color: #adb5bd; }
+    .flight-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .flight-no {
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+    }
+    .flight-badge {
+      font-size: 0.68rem;
+      background: #eef2ff;
+      color: #4e73df;
+      border-radius: 4px;
+      padding: 2px 7px;
+      font-weight: 500;
+    }
+    .flight-time {
+      font-size: 0.88rem;
+      color: #495057;
+      margin-bottom: 3px;
+    }
+    .flight-meta {
+      font-size: 0.75rem;
+      color: #adb5bd;
+      margin-bottom: 14px;
+    }
+    .flight-price {
+      font-size: 1.8rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .flight-price .currency { font-size: 1rem; font-weight: 400; color: #6c757d; margin-right: 2px; }
+    .price-change {
+      font-size: 0.78rem;
+      margin-top: 5px;
+      font-weight: 500;
+    }
+    .price-change.up   { color: #e74a3b; }
+    .price-change.down { color: #1cc88a; }
+    .price-change.flat { color: #adb5bd; }
+    .flight-ts { font-size: 0.7rem; color: #ced4da; margin-top: 4px; }
 
-    /* 图表区域 */
+    /* ── 图表区域 ── */
     .chart-section {
       background: #fff;
       border-radius: 12px;
@@ -60,206 +127,338 @@
     }
     .chart-header {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
-      margin-bottom: 16px;
+      margin-bottom: 20px;
       flex-wrap: wrap;
       gap: 8px;
     }
-    .chart-title { font-size: 0.95rem; font-weight: 600; }
+    .chart-title    { font-size: 1rem; font-weight: 600; margin-bottom: 4px; }
     .chart-subtitle { font-size: 0.78rem; color: #8898aa; }
+    .chart-wrap { position: relative; height: 320px; }
 
-    .chart-wrap { position: relative; height: 280px; }
-
-    /* 更新时间 */
-    footer {
-      text-align: center;
-      font-size: 0.75rem;
-      color: #adb5bd;
-      padding: 12px 0 24px;
-    }
-
-    /* 加载/错误状态 */
+    /* ── 状态 ── */
     .status-msg {
       text-align: center;
       padding: 60px 20px;
       color: #8898aa;
       font-size: 0.9rem;
     }
+
+    footer {
+      text-align: center;
+      font-size: 0.72rem;
+      color: #adb5bd;
+      padding: 8px 0 28px;
+    }
   </style>
 </head>
 <body>
 
 <header>
-  <h1>机票价格追踪</h1>
-  <p>数据每日自动更新 · 东八区 10:00</p>
+  <div class="header-top">
+    <div>
+      <div class="header-title">东方航空 机票价格追踪</div>
+      <div class="header-sub">数据来源：ceair.com 东航官网 · 每日北京时间 10:00 / 22:00 自动更新</div>
+    </div>
+  </div>
+  <div class="route-bar" id="routeBar">
+    <div class="route-item"><div class="route-key">出发</div><div class="route-val">—</div></div>
+    <div class="route-arrow">✈</div>
+    <div class="route-item"><div class="route-key">到达</div><div class="route-val">—</div></div>
+    <div class="route-item"><div class="route-key">出发日期</div><div class="route-val">—</div></div>
+    <div class="route-item"><div class="route-key">返回日期</div><div class="route-val">—</div></div>
+    <div class="route-item"><div class="route-key">舱位</div><div class="route-val">—</div></div>
+    <div class="route-item"><div class="route-key">航司</div><div class="route-val">—</div></div>
+  </div>
 </header>
 
 <main id="app">
   <div class="status-msg" id="loading">加载中…</div>
 </main>
-
 <footer id="footer"></footer>
 
 <script>
-const COLORS = ["#4e73df", "#1cc88a", "#36b9cc", "#f6c23e", "#e74a3b"];
+// ── 配置 ──────────────────────────────────────────────────────────
+const FLIGHT_COLORS = ['#4285f4', '#ea4335', '#34a853', '#ff9800', '#9c27b0', '#00bcd4'];
+const AIRPORT_NAME  = { PVG: '上海浦东', SHA: '上海虹桥', NRT: '东京成田', HND: '东京羽田' };
+const CABIN_NAME    = { y: '经济舱', s: '超级经济舱', c: '商务舱', f: '头等舱' };
 
+// ── 工具函数 ──────────────────────────────────────────────────────
 async function fetchJSON(path) {
-  const r = await fetch(path + "?v=" + Date.now());
-  if (!r.ok) throw new Error(path + " → " + r.status);
+  const r = await fetch(path + '?v=' + Date.now());
+  if (!r.ok) throw new Error(path + ' → ' + r.status);
   return r.json();
 }
 
-function fmtPrice(v, currency) {
-  if (v == null) return "—";
-  const sym = currency === "CNY" ? "¥" : (currency === "USD" ? "$" : currency + " ");
-  return sym + v.toLocaleString("zh-CN");
+// UTC 时间戳转北京时间显示 "05/17 10:00"
+function tsToBeijing(utcStr) {
+  if (!utcStr) return '—';
+  const d = new Date(utcStr + ':00Z');
+  const bj = new Date(d.getTime() + 8 * 3600 * 1000);
+  const mm = String(bj.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(bj.getUTCDate()).padStart(2, '0');
+  const hh = String(bj.getUTCHours()).padStart(2, '0');
+  const min = String(bj.getUTCMinutes()).padStart(2, '0');
+  return `${mm}/${dd} ${hh}:${min}`;
 }
 
-function buildCard(query, history) {
-  const prices  = history.prices;
-  const dates   = history.dates;
-  const latest  = prices.length ? prices[prices.length - 1] : null;
-  const prev    = prices.length >= 2 ? prices[prices.length - 2] : null;
-  const latestDate = dates.length ? dates[dates.length - 1] : null;
-  const currency   = history.currency || "CNY";
+// 获取最后一个非 null 的价格及其时间戳
+function getLatest(priceArr, timestamps) {
+  for (let i = priceArr.length - 1; i >= 0; i--) {
+    if (priceArr[i] != null) return { price: priceArr[i], ts: timestamps[i], idx: i };
+  }
+  return { price: null, ts: null, idx: -1 };
+}
 
-  let changeHTML = "";
-  if (latest != null && prev != null) {
-    const diff = latest - prev;
-    const cls  = diff > 0 ? "up" : diff < 0 ? "down" : "flat";
-    const sign = diff > 0 ? "▲" : diff < 0 ? "▼" : "—";
-    changeHTML = `<div class="card-change ${cls}">${sign} ${Math.abs(diff).toLocaleString()} 较昨日</div>`;
+// 获取倒数第二个非 null 的价格（用于对比）
+function getPrev(priceArr, beforeIdx) {
+  for (let i = beforeIdx - 1; i >= 0; i--) {
+    if (priceArr[i] != null) return priceArr[i];
+  }
+  return null;
+}
+
+// ── 渲染路线信息条 ──────────────────────────────────────────────
+function renderRouteBar(query) {
+  const dep    = query.departure_id || '';
+  const arr    = query.arrival_id   || '';
+  const depName = AIRPORT_NAME[dep] || dep;
+  const arrName = AIRPORT_NAME[arr] || arr;
+  const cabin   = CABIN_NAME[query.cabin] || query.cabin || '经济舱';
+  const airline = query.airline_filter || 'MU';
+
+  function fmt(dateStr) {
+    if (!dateStr) return '—';
+    const [y, m, d] = dateStr.split('-');
+    return `${parseInt(m)}月${parseInt(d)}日`;
   }
 
-  const noData = latest == null;
-  return `
-    <div class="card ${noData ? "no-data" : ""}">
-      <div class="card-label">${query.label}</div>
-      <div class="card-price">
-        ${fmtPrice(latest, currency)}<span>${currency}</span>
-      </div>
-      ${changeHTML}
-      <div class="card-date">${latestDate ? "最新: " + latestDate : "暂无数据"}</div>
+  document.getElementById('routeBar').innerHTML = `
+    <div class="route-item">
+      <div class="route-key">出发</div>
+      <div class="route-val">${depName} (${dep})</div>
+    </div>
+    <div class="route-arrow">✈</div>
+    <div class="route-item">
+      <div class="route-key">到达</div>
+      <div class="route-val">${arrName} (${arr})</div>
+    </div>
+    <div class="route-item">
+      <div class="route-key">出发日期</div>
+      <div class="route-val">${fmt(query.outbound_date)}</div>
+    </div>
+    <div class="route-item">
+      <div class="route-key">返回日期</div>
+      <div class="route-val">${fmt(query.return_date)}</div>
+    </div>
+    <div class="route-item">
+      <div class="route-key">舱位</div>
+      <div class="route-val">${cabin}</div>
+    </div>
+    <div class="route-item">
+      <div class="route-key">航司</div>
+      <div class="route-val">中国东方航空 (${airline})</div>
     </div>`;
 }
 
-function buildChart(queries, histories, colorList) {
-  const allDates = [...new Set(
-    histories.flatMap(h => h.dates)
-  )].sort();
+// ── 渲染航班价格卡片 ─────────────────────────────────────────────
+function renderCards(history, colorMap) {
+  const { flight_info = {}, timestamps = [], prices = {}, currency = 'CNY' } = history;
+  const sym = currency === 'CNY' ? '¥' : currency + ' ';
 
-  if (allDates.length === 0) return null;
+  const flightNos = Object.keys(flight_info).sort();
+  if (!flightNos.length) {
+    return '<div class="status-msg">暂无航班数据，等待爬虫首次运行…</div>';
+  }
 
-  const datasets = queries.map((q, i) => {
-    const h = histories[i];
-    const dataMap = Object.fromEntries(h.dates.map((d, j) => [d, h.prices[j]]));
+  return flightNos.map((fn, i) => {
+    const info    = flight_info[fn] || {};
+    const arr     = prices[fn] || [];
+    const latest  = getLatest(arr, timestamps);
+    const prev    = latest.idx >= 0 ? getPrev(arr, latest.idx) : null;
+    const color   = colorMap[fn] || FLIGHT_COLORS[i % FLIGHT_COLORS.length];
+
+    let changeHTML = '';
+    if (latest.price != null && prev != null) {
+      const diff = latest.price - prev;
+      if (diff > 0)      changeHTML = `<div class="price-change up">▲ ${diff.toLocaleString('zh-CN')} 较上次</div>`;
+      else if (diff < 0) changeHTML = `<div class="price-change down">▼ ${Math.abs(diff).toLocaleString('zh-CN')} 较上次</div>`;
+      else               changeHTML = `<div class="price-change flat">— 与上次持平</div>`;
+    } else if (latest.price != null) {
+      changeHTML = `<div class="price-change flat">首次记录</div>`;
+    }
+
+    const priceHTML = latest.price != null
+      ? `<div class="flight-price"><span class="currency">${sym}</span>${latest.price.toLocaleString('zh-CN')}</div>`
+      : `<div class="flight-price" style="font-size:1.2rem;color:#adb5bd">暂无数据</div>`;
+
+    const aircraft = info.aircraft || '';
+    const duration = info.depTime && info.arrTime ? calcDuration(info.depTime, info.arrTime) : '';
+
+    return `
+      <div class="flight-card" style="border-top-color:${color}">
+        <div class="flight-card-header">
+          <div class="flight-no" style="color:${color}">${fn}</div>
+          ${info.direct ? '<div class="flight-badge">直达</div>' : ''}
+        </div>
+        <div class="flight-time">${info.depTime || '?'} → ${info.arrTime || '?'}${duration ? ' · ' + duration : ''}</div>
+        <div class="flight-meta">${aircraft || '机型未知'}</div>
+        ${priceHTML}
+        ${changeHTML}
+        <div class="flight-ts">${latest.ts ? '更新于 ' + tsToBeijing(latest.ts) + ' (北京时间)' : ''}</div>
+      </div>`;
+  }).join('');
+}
+
+function calcDuration(dep, arr) {
+  try {
+    const [dh, dm] = dep.split(':').map(Number);
+    const [ah, am] = arr.split(':').map(Number);
+    let mins = (ah * 60 + am) - (dh * 60 + dm);
+    if (mins < 0) mins += 24 * 60;
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return h > 0 ? `${h}h${m > 0 ? m + 'm' : ''}` : `${m}m`;
+  } catch { return ''; }
+}
+
+// ── 渲染趋势图 ──────────────────────────────────────────────────
+function renderChart(history, colorMap) {
+  const { flight_info = {}, timestamps = [], prices = {}, currency = 'CNY' } = history;
+  const sym = currency === 'CNY' ? '¥' : currency + ' ';
+
+  const flightNos = Object.keys(flight_info).sort();
+  if (!flightNos.length || !timestamps.length) return null;
+
+  const labels   = timestamps.map(tsToBeijing);
+  const datasets = flightNos.map((fn, i) => {
+    const info  = flight_info[fn] || {};
+    const label = `${fn}  ${info.depTime || ''}→${info.arrTime || ''}`;
+    const color = colorMap[fn] || FLIGHT_COLORS[i % FLIGHT_COLORS.length];
+    const data  = (prices[fn] || []).map(v => v ?? null);
     return {
-      label: q.label,
-      data: allDates.map(d => dataMap[d] ?? null),
-      borderColor: colorList[i % colorList.length],
-      backgroundColor: colorList[i % colorList.length] + "22",
-      borderWidth: 2,
-      pointRadius: 4,
-      pointHoverRadius: 6,
+      label,
+      data,
+      borderColor: color,
+      backgroundColor: color + '22',
+      borderWidth: 2.5,
+      pointRadius: 5,
+      pointHoverRadius: 7,
       fill: false,
       spanGaps: false,
-      tension: 0.3,
+      tension: 0.25,
     };
   });
 
-  return { labels: allDates, datasets };
+  const sym2 = sym;
+  new Chart(document.getElementById('priceChart'), {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: { usePointStyle: true, padding: 18, font: { size: 12 } },
+        },
+        tooltip: {
+          callbacks: {
+            title: items => '北京时间 ' + items[0].label,
+            label: ctx => {
+              const v = ctx.parsed.y;
+              return v != null
+                ? `  ${ctx.dataset.label.split('  ')[0]}: ${sym2}${v.toLocaleString('zh-CN')}`
+                : `  ${ctx.dataset.label.split('  ')[0]}: 无数据`;
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          grid: { color: '#f0f0f0' },
+          ticks: { maxRotation: 45, font: { size: 11 }, maxTicksLimit: 20 },
+        },
+        y: {
+          grid: { color: '#f0f0f0' },
+          ticks: {
+            font: { size: 11 },
+            callback: v => sym2 + v.toLocaleString('zh-CN'),
+          },
+        },
+      },
+    },
+  });
+  return true;
 }
 
+// ── 主流程 ───────────────────────────────────────────────────────
 async function main() {
-  const app     = document.getElementById("app");
-  const footer  = document.getElementById("footer");
+  const app    = document.getElementById('app');
+  const footer = document.getElementById('footer');
 
   let config;
   try {
-    config = await fetchJSON("config.json");
+    config = await fetchJSON('config.json');
   } catch (e) {
-    app.innerHTML = `<div class="status-msg">无法加载配置文件: ${e.message}</div>`;
+    app.innerHTML = `<div class="status-msg">无法加载配置: ${e.message}</div>`;
     return;
   }
 
-  const queries  = config.queries || [];
+  const queries = config.queries || [];
   if (!queries.length) {
     app.innerHTML = `<div class="status-msg">config.json 中尚未配置任何航线</div>`;
     return;
   }
 
-  // 并行加载所有历史数据
-  const histories = await Promise.all(queries.map(async (q) => {
-    try {
-      return await fetchJSON(`data/history/${q.id}.json`);
-    } catch {
-      return { id: q.id, label: q.label, currency: q.currency || "CNY", dates: [], prices: [] };
-    }
-  }));
+  // 目前只处理第一条查询
+  const query = queries[0];
+  renderRouteBar(query);
 
-  // 渲染价格卡片
-  const cardsHTML = queries.map((q, i) => buildCard(q, histories[i])).join("");
+  let history;
+  try {
+    history = await fetchJSON(`data/history/${query.id}.json`);
+  } catch {
+    history = { flight_info: {}, timestamps: [], prices: {}, currency: query.currency || 'CNY' };
+  }
 
-  // 渲染图表区域
-  const chartData = buildChart(queries, histories, COLORS);
-  const hasData   = chartData && chartData.labels.length > 0;
+  // 为每个航班分配固定颜色
+  const flightNos = Object.keys(history.flight_info || {}).sort();
+  const colorMap  = {};
+  flightNos.forEach((fn, i) => { colorMap[fn] = FLIGHT_COLORS[i % FLIGHT_COLORS.length]; });
+
+  const hasData    = flightNos.length > 0;
+  const hasHistory = (history.timestamps || []).length > 0;
 
   app.innerHTML = `
-    <div class="cards">${cardsHTML}</div>
+    <div class="flights-grid" id="flightCards">
+      ${hasData
+        ? renderCards(history, colorMap)
+        : '<div class="status-msg">暂无数据，爬虫首次运行后将自动显示</div>'}
+    </div>
     <div class="chart-section">
       <div class="chart-header">
         <div>
-          <div class="chart-title">价格走势</div>
-          <div class="chart-subtitle">经济舱含税价格 · 点击图例可隐藏/显示某条航线</div>
+          <div class="chart-title">历史价格走势</div>
+          <div class="chart-subtitle">
+            经济舱往返含税价格（人民币）· 时间轴为北京时间 · 点击图例可隐藏/显示航班
+          </div>
         </div>
       </div>
-      ${hasData
-        ? `<div class="chart-wrap"><canvas id="priceChart"></canvas></div>`
-        : `<div class="status-msg">暂无历史数据，爬虫运行后将自动显示</div>`
-      }
+      ${hasHistory
+        ? '<div class="chart-wrap"><canvas id="priceChart"></canvas></div>'
+        : '<div class="status-msg" style="padding:40px">暂无历史记录，等待爬虫首次运行…</div>'}
     </div>`;
 
-  if (hasData) {
-    new Chart(document.getElementById("priceChart"), {
-      type: "line",
-      data: chartData,
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: { mode: "index", intersect: false },
-        plugins: {
-          legend: { position: "top", labels: { usePointStyle: true, padding: 16 } },
-          tooltip: {
-            callbacks: {
-              label: ctx => {
-                const h = histories[ctx.datasetIndex];
-                const sym = (h.currency || "CNY") === "CNY" ? "¥" : "$";
-                return ctx.parsed.y != null
-                  ? ` ${ctx.dataset.label}: ${sym}${ctx.parsed.y.toLocaleString()}`
-                  : ` ${ctx.dataset.label}: —`;
-              }
-            }
-          }
-        },
-        scales: {
-          x: {
-            grid: { color: "#f0f0f0" },
-            ticks: { maxTicksLimit: 12, font: { size: 11 } }
-          },
-          y: {
-            grid: { color: "#f0f0f0" },
-            ticks: {
-              font: { size: 11 },
-              callback: v => "¥" + v.toLocaleString()
-            }
-          }
-        }
-      }
-    });
-  }
+  if (hasHistory) renderChart(history, colorMap);
 
-  footer.textContent = "页面加载时间: " + new Date().toLocaleString("zh-CN");
+  // 最后更新时间（取最新 timestamp 转北京时间）
+  const lastTs = (history.timestamps || []).slice(-1)[0];
+  footer.textContent = lastTs
+    ? `数据最后更新：${tsToBeijing(lastTs)}（北京时间）`
+    : `页面加载时间：${new Date().toLocaleString('zh-CN')}`;
 }
 
 main();

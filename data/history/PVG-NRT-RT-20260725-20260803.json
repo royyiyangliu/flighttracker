@@ -1,14 +1,8 @@
 {
   "id": "PVG-NRT-RT-20260725-20260803",
   "label": "上海→东京 往返 (7/25出发 / 8/3返回)",
-  "type": "roundtrip",
   "currency": "CNY",
-  "dates": [
-    "2026-05-16",
-    "2026-05-17"
-  ],
-  "prices": [
-    null,
-    3955.0
-  ]
+  "flight_info": {},
+  "timestamps": [],
+  "prices": {}
 }
