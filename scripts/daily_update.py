@@ -213,10 +213,15 @@ async def scrape_price(query: dict) -> float | None:
             url_l = response.url.lower()
             is_middle   = "flightmiddlesearch" in url_l
             is_calendar = "getlowpricein" in url_l or "lowpriceincalender" in url_l
+            # 诊断：打印所有 restapi 响应（暂时）
+            if "restapi" in url_l:
+                ct_raw = response.headers.get("content-type", "")
+                print(f"  [RESP-ALL] {response.status} ct={ct_raw[:40]} {response.url[:100]}")
             if not (is_middle or is_calendar):
                 return
             ct = response.headers.get("content-type", "")
             if "json" not in ct:
+                print(f"  [SKIP-CT] {ct} for {response.url[:80]}")
                 return
             try:
                 text = await response.text()
@@ -241,22 +246,33 @@ async def scrape_price(query: dict) -> float | None:
                         mu_prices.extend(prices)
 
                 elif is_calendar:
-                    # 从日历响应中提取目标日期的价格
+                    items = data.get("lowPriceInCalenderDtoInfoList") or []
+                    print(f"  [Calendar] items={len(items)}, "
+                          f"preview={json.dumps(items[:2], ensure_ascii=False)[:200]}")
                     cal = extract_from_calendar(data, outbound)
                     if cal:
-                        print(f"  [Calendar] GetLowPriceInCalender → ¥{cal} (出发 {outbound})")
+                        print(f"  [Calendar] ✓ 出发日 {outbound} → ¥{cal}")
                         cal_prices.append(cal)
                     else:
-                        # 兜底：取响应中最低的合理价格
-                        raw = [
-                            p.get("price") or p.get("lowestPrice") or p.get("totalPrice")
-                            for p in (data.get("lowPriceInCalenderDtoInfoList") or [])
-                            if isinstance(p, dict)
-                        ]
-                        valid = [float(v) for v in raw if isinstance(v, (int, float)) and v > 100]
-                        if valid:
-                            print(f"  [Calendar] 日历价格列表: {sorted(valid)[:5]}")
-                            cal_prices.extend(valid)
+                        # 兜底：取所有合理价格中的最低值
+                        raw = []
+                        for item in items:
+                            if not isinstance(item, dict):
+                                continue
+                            for key in ("price", "lowestPrice", "totalPrice",
+                                        "lowestCurrencyPrice", "avgPrice"):
+                                v = item.get(key)
+                                if isinstance(v, (int, float)) and v > 100:
+                                    raw.append(float(v))
+                        if raw:
+                            print(f"  [Calendar] 兜底价格列表: {sorted(raw)[:5]}")
+                            cal_prices.extend(raw)
+                        else:
+                            # 兜底2：递归找所有价格字段
+                            lcp = data.get("lowestCurrencyPrice")
+                            if isinstance(lcp, (int, float)) and lcp > 100:
+                                print(f"  [Calendar] lowestCurrencyPrice: {lcp}")
+                                cal_prices.append(float(lcp))
 
             except Exception as e:
                 print(f"  [RESP ERR] {e}")
