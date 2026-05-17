@@ -100,17 +100,27 @@ def extract_from_calendar(data: dict, target_date: str) -> float | None:
     """
     从 GetLowPriceInCalender 响应中提取指定日期的最低价。
     target_date: "2026-07-25"
+
+    trip.com 的 dDate 字段是 Unix 时间戳（UTC 午夜），不是日期字符串。
+    同时用 dDateDisplayValue（如 "Sat, Jul 25"）做备用匹配。
     """
-    # 字段名可能为 date/dDate/departDate，价格字段为 price/lowestPrice
+    import calendar as _cal
+    dt = datetime.strptime(target_date, "%Y-%m-%d")
+    target_ts = int(_cal.timegm(dt.timetuple()))   # UTC 午夜时间戳
+    # "Jul 25" — Linux 用 %-d 去掉前导零，GitHub Actions (Ubuntu) 支持
+    target_mmdd = dt.strftime("%b %-d")
+
     items = data.get("lowPriceInCalenderDtoInfoList") or []
     for item in items:
         if not isinstance(item, dict):
             continue
-        d = item.get("date") or item.get("dDate") or item.get("departDate") or ""
-        if str(d).startswith(target_date):
-            price = item.get("price") or item.get("lowestPrice") or item.get("totalPrice")
-            if isinstance(price, (int, float)) and price > 100:
-                return float(price)
+        d_ts   = item.get("dDate", 0)
+        d_disp = item.get("dDateDisplayValue", "")
+        if d_ts == target_ts or target_mmdd in d_disp:
+            for key in ("currencyPrice", "price", "lowestPrice", "totalPrice"):
+                v = item.get(key)
+                if isinstance(v, (int, float)) and v > 100:
+                    return float(v)
     return None
 
 
@@ -282,8 +292,18 @@ async def scrape_price(query: dict) -> float | None:
 
         try:
             await page.goto(url, wait_until="domcontentloaded", timeout=60000)
-            print(f"  页面加载完毕，等待搜索结果（30s）…")
-            await page.wait_for_timeout(30000)
+            print(f"  页面加载完毕，等待初始结果（15s）…")
+            await page.wait_for_timeout(15000)
+
+            # 模拟滚动，触发更多 FlightMiddleSearch 定价请求
+            print(f"  开始滚动页面以触发更多航班定价…")
+            for scroll_y in [800, 1600, 2400, 3200, 4000, 2000, 0]:
+                await page.evaluate(f"window.scrollTo(0, {scroll_y})")
+                await page.wait_for_timeout(3000)
+                print(f"  滚动到 y={scroll_y}，当前已收集: MU={len(mu_prices)} 全部={len(all_prices)} 日历={len(cal_prices)}")
+
+            print(f"  等待最终响应（10s）…")
+            await page.wait_for_timeout(10000)
 
             # 验证 SSE 请求日期
             if sse_dates_seen:
