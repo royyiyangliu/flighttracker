@@ -183,8 +183,6 @@ def parse_sse_chunk(
             price = float(flight["policies"][0]["price"]["totalPrice"])
         except (KeyError, IndexError, TypeError, ValueError):
             pass
-            except (KeyError, IndexError, TypeError):
-                pass
 
         tag = "★" if carrier == airline_code else " "
         if carrier or price:
