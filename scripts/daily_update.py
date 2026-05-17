@@ -160,11 +160,14 @@ def parse_sse_chunk(
 
     print(f"  [SSE-chunk] 找到航班列表，共 {len(flight_list)} 条，key='{key}'")
 
-    # 打印第一条航班的完整结构（仅首次）
+    # 打印第一条航班的完整结构（仅首次）——用于发现价格字段位置
     if flight_list and not getattr(parse_sse_chunk, "_printed_sample", False):
         parse_sse_chunk._printed_sample = True
-        sample = json.dumps(flight_list[0], ensure_ascii=False)
-        print(f"  [SSE-sample] 第1条航班原始结构（前800字）: {sample[:800]}")
+        first = flight_list[0]
+        print(f"  [SSE-sample] 顶层keys: {list(first.keys())}")
+        sample = json.dumps(first, ensure_ascii=False)
+        # 打印前2000字，尽量看到价格字段
+        print(f"  [SSE-sample] 前2000字: {sample[:2000]}")
 
     # 遍历每条航班，提取航司和价格
     for flight in flight_list:
@@ -172,32 +175,27 @@ def parse_sse_chunk(
             continue
 
         # ── 提取航司代码 ────────────────────────────────
-        # itineraryList 每条通常包含 legs/segments，每段有 airline
+        # trip.com itineraryList 结构：
+        #   itinerary → journeyList[0] → transSectionList[0] → flightInfo.airlineCode
         carrier = ""
-        candidate_paths = [
-            # itineraryList 常见路径
-            ["legs", 0, "marketAirline", "code"],
-            ["legs", 0, "airline", "code"],
-            ["legs", 0, "airlineCode"],
-            ["segments", 0, "marketAirline", "code"],
-            ["segments", 0, "airline", "code"],
-            ["segments", 0, "airlineCode"],
-            # 扁平字段
-            ["airlineCode"],
-            ["marketAirlineCode"],
-            ["airline", "code"],
-            ["airlineInfo", "code"],
-        ]
-        for path in candidate_paths:
-            node = flight
-            try:
-                for p in path:
-                    node = node[p]
-                if isinstance(node, str) and 2 <= len(node) <= 3:
-                    carrier = node.upper()
-                    break
-            except (KeyError, IndexError, TypeError):
-                pass
+        try:
+            carrier = (flight["journeyList"][0]["transSectionList"][0]
+                       ["flightInfo"]["airlineCode"]).upper()
+        except (KeyError, IndexError, TypeError):
+            pass
+        # 兜底：其他扁平字段
+        if not carrier:
+            for path in [["airlineCode"], ["marketAirlineCode"],
+                         ["airline", "code"], ["airlineInfo", "code"]]:
+                node = flight
+                try:
+                    for p in path:
+                        node = node[p]
+                    if isinstance(node, str) and 2 <= len(node) <= 3:
+                        carrier = node.upper()
+                        break
+                except (KeyError, IndexError, TypeError):
+                    pass
 
         # ── 提取价格 ────────────────────────────────────
         price = None
