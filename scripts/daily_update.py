@@ -48,32 +48,28 @@ def build_url(query: dict) -> str:
     return base + params
 
 
-def extract_from_middle_search(data: dict, airline_code: str) -> list[float]:
+def extract_from_middle_search(
+    data: dict, airline_code: str
+) -> tuple[list[float], set[str]]:
     """
-    专门从 FlightMiddleSearch 响应提取价格。
-    直接访问 policyList[*].price.totalPrice，不做泛型递归。
-    airline_code: 'MU'/'CA'/'' 等；为空则不过滤航司。
-    返回值单位与 trip.com 一致（us.trip.com 为 USD）。
+    从 FlightMiddleSearch 提取价格，返回 (prices, airlines)。
+    airline_code 不再用于过滤，只用于日志优先标记。
+    价格单位：us.trip.com 返回 USD。
     """
-    # 从 journeyList 收集本次响应中的航司代码
     flight_airlines: set[str] = set()
+    flight_nos: list[str] = []
     for journey in data.get("journeyList", []):
         for transport in journey.get("transportList", []):
-            code = (
-                transport.get("flight", {})
-                .get("airlineInfo", {})
-                .get("code", "")
-            )
+            ai = transport.get("flight", {}).get("airlineInfo", {})
+            code = ai.get("code", "")
+            fn = transport.get("flight", {}).get("flightNo", "")
             if code:
                 flight_airlines.add(code)
+            if fn:
+                flight_nos.append(fn)
 
-    if flight_airlines:
-        print(f"    本次航司: {flight_airlines}")
-
-    # 如果指定了航司且响应中不含该航司，跳过
-    if airline_code and flight_airlines and airline_code not in flight_airlines:
-        print(f"    非目标航司，跳过")
-        return []
+    target_tag = "★" if airline_code and airline_code in flight_airlines else " "
+    print(f"    {target_tag} 本次航司: {flight_airlines} | 航班: {flight_nos[:4]}")
 
     prices: list[float] = []
     for policy in data.get("policyList", []):
@@ -81,7 +77,7 @@ def extract_from_middle_search(data: dict, airline_code: str) -> list[float]:
         if isinstance(total, (int, float)) and total > 10:
             prices.append(float(total))
 
-    return prices
+    return prices, flight_airlines
 
 
 def search_prices_in_json(data, depth: int = 0) -> list[float]:
@@ -219,8 +215,9 @@ async def scrape_price(query: dict) -> float | None:
                     pass
 
                 if is_middle:
-                    prices = extract_from_middle_search(data, airline_code)
-                    print(f"  [FlightMiddleSearch] {log_path.name} "
+                    prices, airlines = extract_from_middle_search(data, airline_code)
+                    tag = "★" if airline_code and airline_code in airlines else " "
+                    print(f"  [{tag}FlightMiddleSearch] {log_path.name} "
                           f"→ 价格: {sorted(prices)[:5]}")
                     xhr_prices.extend(prices)
                 else:
@@ -236,8 +233,8 @@ async def scrape_price(query: dict) -> float | None:
 
         try:
             await page.goto(url, wait_until="domcontentloaded", timeout=60000)
-            print(f"  页面加载完毕，等待搜索结果…")
-            await page.wait_for_timeout(15000)
+            print(f"  页面加载完毕，等待搜索结果（25s）…")
+            await page.wait_for_timeout(25000)
 
             # 确认路由拦截是否触发
             if route_triggered[0]:
