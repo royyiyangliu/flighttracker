@@ -405,7 +405,7 @@ async def scrape_price(query: dict) -> float | None:
 
                     # 保存原始 SSE 文本用于离线分析
                     api_log_counter[0] += 1
-                    log_path = api_log_dir / f"resp_{api_log_counter[0]:02d}_SSE.txt"
+                    log_path = DATA_DIR / "sse_debug.txt"  # 临时：保存到已提交目录供本地调试
                     try:
                         log_path.write_text(text, encoding="utf-8")
                     except Exception:
