@@ -293,14 +293,25 @@ async def scrape_price(query: dict) -> float | None:
                 # 兼容 Cookie Editor 导出格式：expirationDate → expires
                 playwright_cookies = []
                 for c in raw:
+                    # sameSite 值规范化：Cookie Editor 导出的值和 Playwright 要求不同
+                    SAME_SITE_MAP = {
+                        "no_restriction": "None",
+                        "none":           "None",
+                        "lax":            "Lax",
+                        "strict":         "Strict",
+                        "unspecified":    "Lax",
+                    }
+                    raw_ss = str(c.get("sameSite") or "").lower()
+                    same_site = SAME_SITE_MAP.get(raw_ss, "Lax")
+
                     cookie = {
                         "name":     c.get("name", ""),
                         "value":    c.get("value", ""),
                         "domain":   c.get("domain", ".trip.com"),
                         "path":     c.get("path", "/"),
-                        "httpOnly": c.get("httpOnly", False),
-                        "secure":   c.get("secure", False),
-                        "sameSite": c.get("sameSite", "Lax"),
+                        "httpOnly": bool(c.get("httpOnly", False)),
+                        "secure":   bool(c.get("secure", False)),
+                        "sameSite": same_site,
                     }
                     exp = c.get("expirationDate") or c.get("expires")
                     if exp and float(exp) > 0:
