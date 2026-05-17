@@ -124,6 +124,104 @@ def extract_from_calendar(data: dict, target_date: str) -> float | None:
     return None
 
 
+def parse_sse_chunk(
+    chunk: dict,
+    airline_code: str,
+    mu_prices: list[float],
+    all_prices: list[float],
+) -> None:
+    """
+    解析 FlightListSearchSSE 的单个 data chunk。
+    chunk 结构尚未完全确认，先把关键字段全部打印出来，
+    同时尝试提取价格和航司。
+    """
+    # 顶层 key 概览（用于了解数据结构）
+    top_keys = list(chunk.keys())
+
+    # 尝试找航班列表（字段名可能是 flightList / flights / data / result 等）
+    flight_list = None
+    for key in ("flightList", "flights", "flightInfoList", "data", "result",
+                "flightInfo", "journeyList"):
+        v = chunk.get(key)
+        if isinstance(v, list) and len(v) > 0:
+            flight_list = v
+            break
+
+    if flight_list is None:
+        # 这个 chunk 可能是 status/done 帧，跳过但打印 key
+        if top_keys and top_keys != ["status"] and top_keys != ["done"]:
+            print(f"  [SSE-chunk] 无航班列表，顶层keys={top_keys[:8]}")
+        return
+
+    print(f"  [SSE-chunk] 找到航班列表，共 {len(flight_list)} 条，key='{key}'")
+
+    # 打印第一条航班的完整结构（仅首次）
+    if flight_list and not getattr(parse_sse_chunk, "_printed_sample", False):
+        parse_sse_chunk._printed_sample = True
+        sample = json.dumps(flight_list[0], ensure_ascii=False)
+        print(f"  [SSE-sample] 第1条航班原始结构（前800字）: {sample[:800]}")
+
+    # 遍历每条航班，提取航司和价格
+    for flight in flight_list:
+        if not isinstance(flight, dict):
+            continue
+
+        # ── 提取航司代码 ────────────────────────────────
+        carrier = ""
+        # 常见嵌套路径
+        for path in [
+            ["airlineInfo", "code"],
+            ["airline", "code"],
+            ["marketAirline", "code"],
+            ["flight", "airlineInfo", "code"],
+            ["segments", 0, "airline", "code"],
+            ["legs", 0, "airlineCode"],
+        ]:
+            node = flight
+            try:
+                for p in path:
+                    node = node[p]
+                if isinstance(node, str) and len(node) == 2:
+                    carrier = node.upper()
+                    break
+            except (KeyError, IndexError, TypeError):
+                pass
+
+        # 顶层 airlineCode 字段
+        if not carrier:
+            carrier = str(flight.get("airlineCode", "")).upper()
+
+        # ── 提取价格 ────────────────────────────────────
+        price = None
+        for path in [
+            ["price", "totalPrice"],
+            ["price", "salePrice"],
+            ["priceInfo", "totalPrice"],
+            ["lowestPrice"],
+            ["totalPrice"],
+            ["salePrice"],
+            ["minPrice"],
+        ]:
+            node = flight
+            try:
+                for p in path:
+                    node = node[p]
+                if isinstance(node, (int, float)) and node > 10:
+                    price = float(node)
+                    break
+            except (KeyError, IndexError, TypeError):
+                pass
+
+        tag = "★" if carrier == airline_code else " "
+        if carrier or price:
+            print(f"  [SSE-flight]{tag} 航司={carrier or '?':4s}  价格={price}")
+
+        if price:
+            all_prices.append(price)
+            if carrier == airline_code:
+                mu_prices.append(price)
+
+
 def search_prices_in_json(data, depth: int = 0) -> list[float]:
     """兜底：递归搜索 JSON 中所有价格字段（不过滤航司）"""
     if depth > 8:
@@ -223,19 +321,48 @@ async def scrape_price(query: dict) -> float | None:
             url_l = response.url.lower()
             is_middle   = "flightmiddlesearch" in url_l
             is_calendar = "getlowpricein" in url_l or "lowpriceincalender" in url_l
-            # 诊断：打印所有 restapi 响应（暂时）
-            if "restapi" in url_l:
-                ct_raw = response.headers.get("content-type", "")
-                print(f"  [RESP-ALL] {response.status} ct={ct_raw[:40]} {response.url[:100]}")
-            if not (is_middle or is_calendar):
+            is_sse      = "flightlistsearchsse" in url_l
+            if not (is_middle or is_calendar or is_sse):
                 return
             ct = response.headers.get("content-type", "")
-            if "json" not in ct:
-                print(f"  [SKIP-CT] {ct} for {response.url[:80]}")
-                return
             try:
                 text = await response.text()
                 if len(text) < 50:
+                    return
+
+                # ── SSE 流解析 ──────────────────────────────────────────
+                if is_sse:
+                    print(f"  [SSE] 收到流，总长度 {len(text)} 字节，解析中…")
+                    chunks = []
+                    for line in text.splitlines():
+                        line = line.strip()
+                        if not line.startswith("data:"):
+                            continue
+                        raw = line[5:].strip()
+                        if not raw or raw == "{}":
+                            continue
+                        try:
+                            chunks.append(json.loads(raw))
+                        except Exception:
+                            pass
+                    print(f"  [SSE] 共 {len(chunks)} 个 data chunk")
+
+                    # 保存原始 SSE 文本用于离线分析
+                    api_log_counter[0] += 1
+                    log_path = api_log_dir / f"resp_{api_log_counter[0]:02d}_SSE.txt"
+                    try:
+                        log_path.write_text(text, encoding="utf-8")
+                    except Exception:
+                        pass
+
+                    # 解析每个 chunk，提取航班信息
+                    for chunk in chunks:
+                        parse_sse_chunk(chunk, airline_code,
+                                        mu_prices, all_prices)
+                    return
+
+                # ── JSON 响应解析 ────────────────────────────────────────
+                if "json" not in ct:
                     return
                 data = json.loads(text)
 
