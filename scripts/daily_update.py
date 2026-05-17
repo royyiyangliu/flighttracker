@@ -200,14 +200,21 @@ def parse_sse_chunk(
         # ── 提取价格 ────────────────────────────────────
         price = None
         price_paths = [
+            # trip.com itineraryList 最可能的路径（priceList 数组）
+            ["priceList", 0, "adultPrice"],
+            ["priceList", 0, "totalPrice"],
+            ["priceList", 0, "price", "adultPrice"],
+            ["priceList", 0, "price", "totalPrice"],
+            # 其他常见路径
             ["price", "totalPrice"],
+            ["price", "adultPrice"],
             ["price", "salePrice"],
             ["priceInfo", "totalPrice"],
+            ["priceInfo", "adultPrice"],
             ["lowestPrice"],
             ["totalPrice"],
-            ["salePrice"],
-            ["minPrice"],
             ["adultPrice"],
+            ["minPrice"],
         ]
         for path in price_paths:
             node = flight
