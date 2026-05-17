@@ -160,14 +160,6 @@ def parse_sse_chunk(
 
     print(f"  [SSE-chunk] 找到航班列表，共 {len(flight_list)} 条，key='{key}'")
 
-    # 打印第一条航班的完整结构（仅首次）——用于发现价格字段位置
-    if flight_list and not getattr(parse_sse_chunk, "_printed_sample", False):
-        parse_sse_chunk._printed_sample = True
-        first = flight_list[0]
-        print(f"  [SSE-sample] 顶层keys: {list(first.keys())}")
-        sample = json.dumps(first, ensure_ascii=False)
-        # 打印前2000字，尽量看到价格字段
-        print(f"  [SSE-sample] 前2000字: {sample[:2000]}")
 
     # 遍历每条航班，提取航司和价格
     for flight in flight_list:
@@ -175,55 +167,22 @@ def parse_sse_chunk(
             continue
 
         # ── 提取航司代码 ────────────────────────────────
-        # trip.com itineraryList 结构：
-        #   itinerary → journeyList[0] → transSectionList[0] → flightInfo.airlineCode
+        # 结构已确认：journeyList[n].transSectionList[n].flightInfo.airlineCode
+        # 取第一程（outbound）第一段的航司作为代表
         carrier = ""
         try:
             carrier = (flight["journeyList"][0]["transSectionList"][0]
                        ["flightInfo"]["airlineCode"]).upper()
         except (KeyError, IndexError, TypeError):
             pass
-        # 兜底：其他扁平字段
-        if not carrier:
-            for path in [["airlineCode"], ["marketAirlineCode"],
-                         ["airline", "code"], ["airlineInfo", "code"]]:
-                node = flight
-                try:
-                    for p in path:
-                        node = node[p]
-                    if isinstance(node, str) and 2 <= len(node) <= 3:
-                        carrier = node.upper()
-                        break
-                except (KeyError, IndexError, TypeError):
-                    pass
 
         # ── 提取价格 ────────────────────────────────────
+        # 结构已确认：policies[0].price.totalPrice
         price = None
-        price_paths = [
-            # trip.com itineraryList 最可能的路径（priceList 数组）
-            ["priceList", 0, "adultPrice"],
-            ["priceList", 0, "totalPrice"],
-            ["priceList", 0, "price", "adultPrice"],
-            ["priceList", 0, "price", "totalPrice"],
-            # 其他常见路径
-            ["price", "totalPrice"],
-            ["price", "adultPrice"],
-            ["price", "salePrice"],
-            ["priceInfo", "totalPrice"],
-            ["priceInfo", "adultPrice"],
-            ["lowestPrice"],
-            ["totalPrice"],
-            ["adultPrice"],
-            ["minPrice"],
-        ]
-        for path in price_paths:
-            node = flight
-            try:
-                for p in path:
-                    node = node[p]
-                if isinstance(node, (int, float)) and node > 10:
-                    price = float(node)
-                    break
+        try:
+            price = float(flight["policies"][0]["price"]["totalPrice"])
+        except (KeyError, IndexError, TypeError, ValueError):
+            pass
             except (KeyError, IndexError, TypeError):
                 pass
 
@@ -405,7 +364,7 @@ async def scrape_price(query: dict) -> float | None:
 
                     # 保存原始 SSE 文本用于离线分析
                     api_log_counter[0] += 1
-                    log_path = DATA_DIR / "sse_debug.txt"  # 临时：保存到已提交目录供本地调试
+                    log_path = api_log_dir / f"resp_{api_log_counter[0]:02d}_SSE.txt"
                     try:
                         log_path.write_text(text, encoding="utf-8")
                     except Exception:

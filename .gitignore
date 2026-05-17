@@ -3,3 +3,4 @@ __pycache__/
 .env
 data/debug_screenshot.png
 data/history/api_logs/
+data/history/sse_debug.txt
