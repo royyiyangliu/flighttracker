@@ -96,6 +96,24 @@ def extract_from_middle_search(
     return prices, flight_airlines
 
 
+def extract_from_calendar(data: dict, target_date: str) -> float | None:
+    """
+    从 GetLowPriceInCalender 响应中提取指定日期的最低价。
+    target_date: "2026-07-25"
+    """
+    # 字段名可能为 date/dDate/departDate，价格字段为 price/lowestPrice
+    items = data.get("lowPriceInCalenderDtoInfoList") or []
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        d = item.get("date") or item.get("dDate") or item.get("departDate") or ""
+        if str(d).startswith(target_date):
+            price = item.get("price") or item.get("lowestPrice") or item.get("totalPrice")
+            if isinstance(price, (int, float)) and price > 100:
+                return float(price)
+    return None
+
+
 def search_prices_in_json(data, depth: int = 0) -> list[float]:
     """兜底：递归搜索 JSON 中所有价格字段（不过滤航司）"""
     if depth > 8:
@@ -151,47 +169,34 @@ async def scrape_price(query: dict) -> float | None:
         )
         page = await context.new_page()
 
-        # ── 关键：拦截 FlightListSearchSSE，替换搜索日期 ──────────────────
-        route_triggered = [False]
+        # showfarefirst URL 已携带正确日期和货币，无需路由拦截
+        # 仅记录 FlightListSearchSSE 的实际请求日期做验证
+        sse_dates_seen: list[str] = []
 
-        async def handle_sse_route(route, request):
-            if "FlightListSearchSSE" not in request.url:
-                await route.continue_()
-                return
+        async def on_sse_request(route, request):
+            """记录 SSE 请求参数（不修改），通过验证日期"""
             try:
-                body_text = request.post_data or "{}"
-                body = json.loads(body_text)
-                journeys = (
-                    body.get("searchCriteria", {})
-                    .get("journeyInfoTypes", [])
-                )
-                for j in journeys:
-                    dep = j.get("departCode", "")
-                    arr = j.get("arriveCode", "")
-                    old_date = j.get("departDate", "")
-                    if dep == dep_id and arr == arr_id:
-                        j["departDate"] = outbound
-                        print(f"  [ROUTE] 出发日修改: {old_date} → {outbound}")
-                        route_triggered[0] = True
-                    elif ret and dep == arr_id and arr == dep_id:
-                        j["departDate"] = ret
-                        print(f"  [ROUTE] 返程日修改: {old_date} → {ret}")
-                modified = json.dumps(body)
-                await route.continue_(post_data=modified)
-            except Exception as e:
-                print(f"  [ROUTE ERR] {e}")
-                await route.continue_()
+                body = json.loads(request.post_data or "{}")
+                for j in body.get("searchCriteria", {}).get("journeyInfoTypes", []):
+                    d = j.get("departDate", "")
+                    if d:
+                        sse_dates_seen.append(d)
+            except Exception:
+                pass
+            await route.continue_()
 
-        await page.route("**/*FlightListSearchSSE*", handle_sse_route)
-        # ──────────────────────────────────────────────────────────────────
+        await page.route("**/*FlightListSearchSSE*", on_sse_request)
 
-        xhr_prices: list[float] = []
+        # 价格桶：分别记录 FlightMiddleSearch 和低价日历的价格
+        mu_prices:  list[float] = []   # 目标航司价格
+        all_prices: list[float] = []   # 全部航班价格（兜底）
+        cal_prices: list[float] = []   # GetLowPriceInCalender 价格（最快出现）
         api_log_counter = [0]
 
         async def on_request(request):
             url_l = request.url.lower()
             if "restapi" in url_l and any(
-                k in url_l for k in ("flight", "search", "middle", "lowprice")
+                k in url_l for k in ("flightlist", "flightmiddle", "lowprice", "getlowprice")
             ):
                 body = ""
                 try:
@@ -200,17 +205,15 @@ async def scrape_price(query: dict) -> float | None:
                     pass
                 print(f"  [REQ] {request.method} {request.url[:140]}")
                 if body:
-                    print(f"  [REQ BODY] {body[:500]}")
+                    print(f"  [REQ BODY] {body[:400]}")
 
         async def on_response(response):
             if response.status != 200:
                 return
             url_l = response.url.lower()
-            is_middle = "flightmiddlesearch" in url_l
-            is_other_api = "restapi" in url_l and any(
-                k in url_l for k in ("flight", "search", "lowprice")
-            )
-            if not (is_middle or is_other_api):
+            is_middle   = "flightmiddlesearch" in url_l
+            is_calendar = "getlowpricein" in url_l or "lowpriceincalender" in url_l
+            if not (is_middle or is_calendar):
                 return
             ct = response.headers.get("content-type", "")
             if "json" not in ct:
@@ -221,7 +224,6 @@ async def scrape_price(query: dict) -> float | None:
                     return
                 data = json.loads(text)
 
-                # 保存完整响应到文件
                 api_log_counter[0] += 1
                 endpoint = re.sub(r"[^\w]", "_", response.url.split("/")[-1][:40])
                 log_path = api_log_dir / f"resp_{api_log_counter[0]:02d}_{endpoint}.json"
@@ -233,13 +235,28 @@ async def scrape_price(query: dict) -> float | None:
                 if is_middle:
                     prices, airlines = extract_from_middle_search(data, airline_code)
                     tag = "★" if airline_code and airline_code in airlines else " "
-                    print(f"  [{tag}FlightMiddleSearch] {log_path.name} "
-                          f"→ 价格: {sorted(prices)[:5]}")
-                    xhr_prices.extend(prices)
-                else:
-                    prices = search_prices_in_json(data)
-                    if prices:
-                        print(f"  [API] {response.url[:80]} → 价格: {sorted(prices)[:5]}")
+                    print(f"  [{tag}FlightMiddleSearch] → {sorted(prices)[:5]}")
+                    all_prices.extend(prices)
+                    if airline_code and airline_code in airlines:
+                        mu_prices.extend(prices)
+
+                elif is_calendar:
+                    # 从日历响应中提取目标日期的价格
+                    cal = extract_from_calendar(data, outbound)
+                    if cal:
+                        print(f"  [Calendar] GetLowPriceInCalender → ¥{cal} (出发 {outbound})")
+                        cal_prices.append(cal)
+                    else:
+                        # 兜底：取响应中最低的合理价格
+                        raw = [
+                            p.get("price") or p.get("lowestPrice") or p.get("totalPrice")
+                            for p in (data.get("lowPriceInCalenderDtoInfoList") or [])
+                            if isinstance(p, dict)
+                        ]
+                        valid = [float(v) for v in raw if isinstance(v, (int, float)) and v > 100]
+                        if valid:
+                            print(f"  [Calendar] 日历价格列表: {sorted(valid)[:5]}")
+                            cal_prices.extend(valid)
 
             except Exception as e:
                 print(f"  [RESP ERR] {e}")
@@ -249,41 +266,35 @@ async def scrape_price(query: dict) -> float | None:
 
         try:
             await page.goto(url, wait_until="domcontentloaded", timeout=60000)
-            print(f"  页面加载完毕，等待搜索结果（25s）…")
-            await page.wait_for_timeout(25000)
+            print(f"  页面加载完毕，等待搜索结果（30s）…")
+            await page.wait_for_timeout(30000)
 
-            # 路由拦截结果报告
-            if route_triggered[0]:
-                print(f"  ✓ FlightListSearchSSE 已拦截并替换日期为 {outbound}")
-                # 路由拦截成功 → 数据已是正确日期，不清空价格、不触发日历交互
-            else:
-                print(f"  ✗ FlightListSearchSSE 未拦截，尝试 JS 日历交互…")
-                # 仅在路由未触发时，才尝试日历操作
-                page_text = await page.inner_text("body")
-                months_found = re.findall(
-                    r"(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4}",
-                    page_text,
-                )
-                print(f"  页面显示月份: {list(set(months_found))[:10]}")
-
-                target_month = outbound_dt.strftime("%b")
-                target_year = str(outbound_dt.year)
-                if target_month not in page_text or target_year not in page_text:
-                    xhr_prices.clear()
-                    await set_dates_via_js(page, outbound_dt, ret_dt)
-                    print(f"  日历交互完成，等待搜索结果…")
-                    await page.wait_for_timeout(15000)
+            # 验证 SSE 请求日期
+            if sse_dates_seen:
+                print(f"  FlightListSearchSSE 请求日期: {sse_dates_seen}")
+                if outbound in sse_dates_seen:
+                    print(f"  ✓ 日期验证通过（{outbound}）")
+                else:
+                    print(f"  ⚠ 日期不符，SSE 请求了: {sse_dates_seen}")
 
             # 保存截图
             await page.screenshot(path=str(DATA_DIR / "debug_screenshot.png"))
             print(f"  截图已保存")
 
-            # 过滤有效价格（> 10，适配 USD 和 CNY）
-            valid = [x for x in xhr_prices if x > 10]
-            if valid:
-                result = min(valid)
-                currency = query.get("currency", "USD")
-                print(f"  [最终] 最低价: {result} {currency}")
+            currency = query.get("currency", "CNY")
+
+            # 优先级：目标航司 > 任意航班 > 低价日历
+            if mu_prices:
+                result = min(mu_prices)
+                print(f"  [★MU 最低价] {result} {currency}")
+                return result
+            if all_prices:
+                result = min(all_prices)
+                print(f"  [全航司最低价] {result} {currency}")
+                return result
+            if cal_prices:
+                result = min(cal_prices)
+                print(f"  [低价日历最低价] {result} {currency}")
                 return result
 
             # 兜底 DOM 解析
