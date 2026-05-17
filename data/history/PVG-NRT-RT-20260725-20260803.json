@@ -4,9 +4,11 @@
   "type": "roundtrip",
   "currency": "CNY",
   "dates": [
-    "2026-05-16"
+    "2026-05-16",
+    "2026-05-17"
   ],
   "prices": [
+    null,
     null
   ]
 }
