@@ -5,6 +5,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from playwright.async_api import async_playwright, Page
 
+try:
+    from playwright_stealth import stealth_async
+    HAS_STEALTH = True
+except ImportError:
+    HAS_STEALTH = False
+
 BASE_DIR = Path(__file__).parent.parent
 CONFIG_PATH = BASE_DIR / "config.json"
 DATA_DIR = BASE_DIR / "data" / "history"
@@ -289,6 +295,13 @@ async def scrape_price(query: dict) -> float | None:
             print("  未找到 cookies.json，以匿名模式运行")
 
         page = await context.new_page()
+
+        # 应用 stealth 补丁：隐藏 navigator.webdriver / plugins 等指纹，绕过 trip.com 反爬
+        if HAS_STEALTH:
+            await stealth_async(page)
+            print("  [stealth] 已应用 playwright-stealth 补丁")
+        else:
+            print("  [stealth] 未安装 playwright-stealth，以普通 headless 模式运行")
 
         # showfarefirst URL 已携带正确日期和货币，无需路由拦截
         # 仅记录 FlightListSearchSSE 的实际请求日期做验证
