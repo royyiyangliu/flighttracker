@@ -138,18 +138,23 @@ def parse_sse_chunk(
     # 顶层 key 概览（用于了解数据结构）
     top_keys = list(chunk.keys())
 
-    # 尝试找航班列表（字段名可能是 flightList / flights / data / result 等）
+    # 打印 airlineList（如有）——用于了解本次搜索涉及的所有航司
+    airline_list = chunk.get("airlineList")
+    if isinstance(airline_list, list):
+        codes = [a.get("code","") for a in airline_list if isinstance(a, dict)]
+        print(f"  [SSE-airlines] 本次搜索涉及航司: {codes}")
+
+    # 尝试找航班列表（trip.com 用 itineraryList）
     flight_list = None
-    for key in ("flightList", "flights", "flightInfoList", "data", "result",
-                "flightInfo", "journeyList"):
+    for key in ("itineraryList", "flightList", "flights", "flightInfoList",
+                "data", "result", "flightInfo", "journeyList"):
         v = chunk.get(key)
         if isinstance(v, list) and len(v) > 0:
             flight_list = v
             break
 
     if flight_list is None:
-        # 这个 chunk 可能是 status/done 帧，跳过但打印 key
-        if top_keys and top_keys != ["status"] and top_keys != ["done"]:
+        if top_keys and top_keys not in (["status"], ["done"]):
             print(f"  [SSE-chunk] 无航班列表，顶层keys={top_keys[:8]}")
         return
 
@@ -167,33 +172,36 @@ def parse_sse_chunk(
             continue
 
         # ── 提取航司代码 ────────────────────────────────
+        # itineraryList 每条通常包含 legs/segments，每段有 airline
         carrier = ""
-        # 常见嵌套路径
-        for path in [
-            ["airlineInfo", "code"],
-            ["airline", "code"],
-            ["marketAirline", "code"],
-            ["flight", "airlineInfo", "code"],
-            ["segments", 0, "airline", "code"],
+        candidate_paths = [
+            # itineraryList 常见路径
+            ["legs", 0, "marketAirline", "code"],
+            ["legs", 0, "airline", "code"],
             ["legs", 0, "airlineCode"],
-        ]:
+            ["segments", 0, "marketAirline", "code"],
+            ["segments", 0, "airline", "code"],
+            ["segments", 0, "airlineCode"],
+            # 扁平字段
+            ["airlineCode"],
+            ["marketAirlineCode"],
+            ["airline", "code"],
+            ["airlineInfo", "code"],
+        ]
+        for path in candidate_paths:
             node = flight
             try:
                 for p in path:
                     node = node[p]
-                if isinstance(node, str) and len(node) == 2:
+                if isinstance(node, str) and 2 <= len(node) <= 3:
                     carrier = node.upper()
                     break
             except (KeyError, IndexError, TypeError):
                 pass
 
-        # 顶层 airlineCode 字段
-        if not carrier:
-            carrier = str(flight.get("airlineCode", "")).upper()
-
         # ── 提取价格 ────────────────────────────────────
         price = None
-        for path in [
+        price_paths = [
             ["price", "totalPrice"],
             ["price", "salePrice"],
             ["priceInfo", "totalPrice"],
@@ -201,7 +209,9 @@ def parse_sse_chunk(
             ["totalPrice"],
             ["salePrice"],
             ["minPrice"],
-        ]:
+            ["adultPrice"],
+        ]
+        for path in price_paths:
             node = flight
             try:
                 for p in path:
