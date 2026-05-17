@@ -62,6 +62,10 @@ async def scrape_price(query: dict) -> float | None:
     print(f"  URL: {url}")
     print(f"  目标日期: {outbound}{' → ' + ret if ret else ''}")
 
+    # 保存 API 响应到文件的目录
+    api_log_dir = DATA_DIR / "api_logs"
+    api_log_dir.mkdir(parents=True, exist_ok=True)
+
     async with async_playwright() as p:
         browser = await p.chromium.launch(
             headless=True,
@@ -79,69 +83,109 @@ async def scrape_price(query: dict) -> float | None:
         page = await context.new_page()
 
         xhr_prices: list[float] = []
-        api_candidates: list[dict] = []  # 记录候选 API 端点
+        api_log_counter = [0]
 
         async def on_request(request):
             url_l = request.url.lower()
-            if any(k in url_l for k in ("flight", "search", "ticket", "intl", "query")):
+            if "restapi" in url_l or any(k in url_l for k in ("flight", "search", "ticket")):
                 body = ""
                 try:
                     body = request.post_data or ""
                 except Exception:
                     pass
-                print(f"  [REQ] {request.method} {request.url[:120]}")
+                print(f"  [REQ] {request.method} {request.url[:140]}")
                 if body:
-                    print(f"  [REQ BODY] {body[:300]}")
+                    print(f"  [REQ BODY] {body[:400]}")
 
         async def on_response(response):
             if response.status != 200:
                 return
             url_l = response.url.lower()
-            if not any(k in url_l for k in ("flight", "search", "ticket", "intl", "query")):
+            # 捕获所有 restapi 端点 + flight/search 关键词
+            if "restapi" not in url_l and not any(
+                k in url_l for k in ("flight", "search", "ticket")
+            ):
                 return
             ct = response.headers.get("content-type", "")
             if "json" not in ct:
                 return
             try:
                 text = await response.text()
-                print(f"  [RESP] {response.url[:100]}")
-                print(f"  [RESP PREVIEW] {text[:400]}")
+                if len(text) < 50:
+                    return
+                print(f"  [RESP] {response.url[:140]}")
+
+                # 保存完整响应到文件（便于离线分析）
+                api_log_counter[0] += 1
+                log_name = f"resp_{api_log_counter[0]:02d}.json"
+                endpoint = re.sub(r"[^\w]", "_", response.url.split("/")[-1][:40])
+                log_path = api_log_dir / f"resp_{api_log_counter[0]:02d}_{endpoint}.json"
+                try:
+                    log_path.write_text(text, encoding="utf-8")
+                    print(f"  [SAVED] {log_path.name} ({len(text)} bytes)")
+                except Exception:
+                    pass
+
+                # 打印前 600 字符
+                print(f"  [PREVIEW] {text[:600]}")
+
                 data = json.loads(text)
-                found = search_prices_in_json(data, airline_name)
-                if found:
-                    print(f"  [XHR PRICES] {sorted(found)[:8]}")
-                    xhr_prices.extend(found)
-                    api_candidates.append({"url": response.url, "prices": found[:5]})
-            except Exception:
-                pass
+
+                # 不限制航司，先收集所有有效价格
+                all_prices = search_prices_in_json(data, airline_name="", depth=0)
+                # 再用航司过滤收集一份
+                airline_prices = search_prices_in_json(data, airline_name=airline_name, depth=0)
+
+                if airline_prices:
+                    print(f"  [XHR 航司匹配价格] {sorted(airline_prices)[:6]}")
+                    xhr_prices.extend(airline_prices)
+                elif all_prices:
+                    print(f"  [XHR 所有价格] {sorted(all_prices)[:6]}")
+                    # 如果没有航司匹配的价格，也记录所有价格作为候补
+                    xhr_prices.extend(all_prices)
+
+            except Exception as e:
+                print(f"  [RESP ERR] {e}")
 
         page.on("request", on_request)
         page.on("response", on_response)
 
         try:
             await page.goto(url, wait_until="domcontentloaded", timeout=60000)
-            await page.wait_for_timeout(8000)
+            await page.wait_for_timeout(10000)
 
             # 检查页面是否包含正确的出发月份
             page_text = await page.inner_text("body")
             target_month = outbound_dt.strftime("%b")  # "Jul"
             target_year = str(outbound_dt.year)        # "2026"
 
+            # 诊断：打印页面中找到的月份信息
+            months_found = re.findall(
+                r"(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4}",
+                page_text
+            )
+            print(f"  页面包含月份: {list(set(months_found))[:10]}")
+
             if target_month in page_text and target_year in page_text:
                 print(f"  ✓ 日期验证通过 ({target_month} {target_year})")
             else:
-                print(f"  ✗ 页面未显示目标日期 ({target_month} {target_year})，尝试日历交互...")
+                print(f"  ✗ 页面未显示目标日期，尝试 JS 日历交互...")
                 xhr_prices.clear()
-                success = await set_dates_via_calendar(page, outbound_dt, ret_dt)
+                success = await set_dates_via_js(page, outbound_dt, ret_dt)
                 if success:
                     print(f"  日历交互完成，等待结果加载...")
-                    await page.wait_for_timeout(10000)
+                    await page.wait_for_timeout(12000)
+                    page_text2 = await page.inner_text("body")
+                    months2 = re.findall(
+                        r"(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4}",
+                        page_text2
+                    )
+                    print(f"  交互后页面月份: {list(set(months2))[:10]}")
                 else:
                     print(f"  日历交互失败")
 
             # 保存截图
             debug_path = DATA_DIR / "debug_screenshot.png"
-            debug_path.parent.mkdir(parents=True, exist_ok=True)
             await page.screenshot(path=str(debug_path))
             print(f"  截图已保存")
 
@@ -172,171 +216,232 @@ async def scrape_price(query: dict) -> float | None:
             await browser.close()
 
 
-async def set_dates_via_calendar(page: Page, outbound_dt: datetime, ret_dt) -> bool:
-    """通过点击页面日历控件来设置正确日期"""
+async def set_dates_via_js(page: Page, outbound_dt: datetime, ret_dt) -> bool:
+    """用 page.evaluate() 绕过 headless 可见性限制，直接触发 JS click"""
     try:
-        # 用 JS 找所有含日期文本（如 "Mon, May 18"）的叶节点元素
-        date_elements = await page.evaluate("""
+        # 诊断：先列出所有含日期关键词的元素
+        diag = await page.evaluate("""
             () => {
-                const re = /(Mon|Tue|Wed|Thu|Fri|Sat|Sun),\\s+\\w+\\s+\\d+/;
                 const results = [];
-                const all = document.querySelectorAll('*');
-                for (const el of all) {
-                    if (el.children.length === 0 && re.test(el.textContent.trim())) {
+                const re = /depart|arrive|date|calendar|picker/i;
+                document.querySelectorAll('[class]').forEach(el => {
+                    const cls = el.className.toString();
+                    if (re.test(cls)) {
                         results.push({
-                            text: el.textContent.trim().slice(0, 40),
                             tag: el.tagName,
-                            cls: el.className.toString().slice(0, 80),
-                            visible: el.offsetWidth > 0 && el.offsetHeight > 0
+                            cls: cls.slice(0, 80),
+                            text: el.textContent.trim().slice(0, 40)
                         });
-                        if (results.length >= 8) break;
                     }
-                }
-                return results;
+                });
+                return results.slice(0, 15);
             }
         """)
-        print(f"  页面日期元素: {json.dumps(date_elements, ensure_ascii=False)}")
+        print(f"  日期相关元素: {json.dumps(diag, ensure_ascii=False)}")
 
-        # 保存截图（此时页面还是错误日期）
-        await page.screenshot(path=str(DATA_DIR / "debug_calendar.png"))
-
-        # 用已知的类名直接强制点击出发日期（headless 下 offsetWidth=0，需 force=True）
-        # 诊断输出中确认类名为 nh_d-departTime
-        known_date_selectors = [
-            ".nh_d-departTime",       # trip.com 出发日期（已确认）
-            "[class*='departTime']",
-            "[class*='depart-time']",
-        ]
-        clicked_sel = None
-        for sel in known_date_selectors:
-            try:
-                el = await page.query_selector(sel)
-                if el:
-                    await el.click(force=True)
-                    clicked_sel = sel
-                    print(f"  强制点击日期元素成功: {sel}")
-                    await page.wait_for_timeout(2000)
-                    break
-            except Exception as e:
-                print(f"  点击 {sel} 失败: {e}")
-                continue
-
-        if not clicked_sel:
-            print("  未能点击任何日期元素")
+        # 用 JS click 打开日期选择器（绕过 headless 可见性检查）
+        clicked = await page.evaluate("""
+            () => {
+                const sels = [
+                    '.nh_d-departTime',
+                    '[class*="departTime"]',
+                    '[class*="depart-time"]',
+                    '[class*="departure-date"]',
+                    '[class*="DepartureDate"]'
+                ];
+                for (const s of sels) {
+                    const el = document.querySelector(s);
+                    if (el) { el.click(); return s; }
+                }
+                return null;
+            }
+        """)
+        if not clicked:
+            print("  未找到日期元素，放弃日历交互")
             return False
 
-        # 截图查看日历是否打开
+        print(f"  JS click 成功: {clicked}")
+        await page.wait_for_timeout(2000)
         await page.screenshot(path=str(DATA_DIR / "debug_calendar_open.png"))
 
-        # 导航日历到目标月份并点击日期
-        await navigate_to_month(page, outbound_dt)
-        await click_day(page, outbound_dt.day)
-        await page.wait_for_timeout(800)
+        # 诊断：日历打开后的结构
+        cal_info = await page.evaluate("""
+            () => {
+                const sels = [
+                    '[class*="calendar"]',
+                    '[class*="Calendar"]',
+                    '[class*="datepicker"]',
+                    '[class*="DatePicker"]'
+                ];
+                for (const s of sels) {
+                    const el = document.querySelector(s);
+                    if (el && el.offsetHeight > 0) {
+                        return {sel: s, text: el.textContent.slice(0, 200)};
+                    }
+                }
+                return null;
+            }
+        """)
+        print(f"  日历元素: {json.dumps(cal_info, ensure_ascii=False)}")
 
-        # 往返则继续点回程日期
+        # 导航到目标月份并点击日期
+        ok1 = await navigate_and_click_js(page, outbound_dt)
+        await page.wait_for_timeout(600)
+
         if ret_dt:
-            await navigate_to_month(page, ret_dt)
-            await click_day(page, ret_dt.day)
-            await page.wait_for_timeout(800)
+            ok2 = await navigate_and_click_js(page, ret_dt)
+            await page.wait_for_timeout(600)
+
+        await page.screenshot(path=str(DATA_DIR / "debug_calendar_selected.png"))
 
         # 点击搜索按钮
-        search_selectors = [
-            "button[class*='search']",
-            "[class*='search-btn']",
-            "[class*='SearchBtn']",
-            "button[type='submit']",
-        ]
-        for sel in search_selectors:
-            try:
-                btn = await page.wait_for_selector(sel, timeout=2000)
-                if btn:
-                    await btn.click()
-                    print(f"  点击搜索按钮: {sel}")
-                    return True
-            except Exception:
-                continue
-
-        return True  # 有时无需点搜索，日期选完自动刷新
+        search_sel = await page.evaluate("""
+            () => {
+                const sels = [
+                    'button[class*="search"]', '[class*="search-btn"]',
+                    '[class*="SearchBtn"]', 'button[type="submit"]',
+                    '[class*="submit"]'
+                ];
+                for (const s of sels) {
+                    const btn = document.querySelector(s);
+                    if (btn) { btn.click(); return s; }
+                }
+                return null;
+            }
+        """)
+        print(f"  搜索按钮点击: {search_sel}")
+        return True
 
     except Exception as e:
-        print(f"  日历交互异常: {e}")
+        print(f"  JS 日历交互异常: {e}")
         return False
 
 
-async def navigate_to_month(page: Page, target_dt: datetime):
-    """导航日历到目标月份"""
+async def navigate_and_click_js(page: Page, target_dt: datetime) -> bool:
+    """用 JS 导航日历月份并点击目标日期"""
     target_month = target_dt.strftime("%B")  # "July"
     target_year = str(target_dt.year)
+    day_str = str(target_dt.day)
 
-    for _ in range(24):
-        # 检查当前日历显示的月份
-        header = await page.query_selector(
-            "[class*='calendar-header'], [class*='CalendarHeader'], "
-            "[class*='month-title'], [class*='MonthTitle'], "
-            "[class*='calendar-title']"
-        )
-        if header:
-            txt = await header.inner_text()
-            if target_month in txt and target_year in txt:
-                return
+    for attempt in range(24):
+        # 读取当前日历标题
+        header = await page.evaluate("""
+            () => {
+                const sels = [
+                    '[class*="calendar-header"]', '[class*="CalendarHeader"]',
+                    '[class*="month-title"]', '[class*="MonthTitle"]',
+                    '[class*="calendar-title"]', '[class*="CalendarTitle"]'
+                ];
+                for (const s of sels) {
+                    const els = document.querySelectorAll(s);
+                    for (const el of els) {
+                        const t = el.textContent.trim();
+                        if (t) return t;
+                    }
+                }
+                // fallback: 找任何包含月份名的可见文本
+                const months = ['January','February','March','April','May','June',
+                                'July','August','September','October','November','December'];
+                const all = document.querySelectorAll('*');
+                for (const el of all) {
+                    if (el.children.length === 0) {
+                        const t = el.textContent.trim();
+                        if (months.some(m => t.includes(m)) && /\\d{4}/.test(t)) return t;
+                    }
+                }
+                return '';
+            }
+        """)
+        print(f"  日历标题[{attempt}]: {header!r}")
 
-        # 点下一个月
-        next_btn = await page.query_selector(
-            "[class*='next-month'], [class*='NextMonth'], "
-            "[aria-label*='next month' i], [aria-label*='Next Month' i], "
-            "button[class*='next']"
-        )
-        if next_btn:
-            await next_btn.click()
-            await page.wait_for_timeout(400)
-        else:
+        if target_month in header and target_year in header:
             break
 
+        # 点击"下一个月"按钮
+        clicked_next = await page.evaluate("""
+            () => {
+                const sels = [
+                    '[class*="next-month"]', '[class*="NextMonth"]',
+                    '[class*="next_month"]', '[aria-label*="next" i]',
+                    'button[class*="next"]', '[class*="arrow-right"]',
+                    '[class*="ArrowRight"]', '.nh_cal-next'
+                ];
+                for (const s of sels) {
+                    const btn = document.querySelector(s);
+                    if (btn) { btn.click(); return s; }
+                }
+                return null;
+            }
+        """)
+        if not clicked_next:
+            print(f"  未找到下一月按钮，停止导航")
+            break
+        await page.wait_for_timeout(300)
 
-async def click_day(page: Page, day: int):
-    """点击日历中的指定日期数字"""
-    day_str = str(day)
-    cells = await page.query_selector_all(
-        "[class*='calendar'] td:not([class*='disabled']):not([class*='other']), "
-        "[class*='CalendarDay']:not([class*='disabled']):not([class*='gray']), "
-        "[class*='day-cell']:not([class*='disabled'])"
-    )
-    for cell in cells:
-        text = (await cell.inner_text()).strip()
-        if text == day_str:
-            await cell.click()
-            print(f"  点击日期 {day} 成功")
-            return
-    print(f"  未找到日期 {day} 的单元格")
+    # 点击目标日期
+    clicked_day = await page.evaluate(f"""
+        () => {{
+            const daySels = [
+                '[class*="calendar"] td',
+                '[class*="CalendarDay"]',
+                '[class*="day-cell"]',
+                '[class*="cal-day"]',
+                '.nh_cal-day'
+            ];
+            const target = '{day_str}';
+            for (const s of daySels) {{
+                const cells = document.querySelectorAll(s);
+                for (const cell of cells) {{
+                    const t = cell.textContent.trim();
+                    if (t === target && !cell.className.includes('disabled')
+                            && !cell.className.includes('gray')
+                            && !cell.className.includes('other')) {{
+                        cell.click();
+                        return s + ':' + t;
+                    }}
+                }}
+            }}
+            return null;
+        }}
+    """)
+    print(f"  日期点击结果: {clicked_day}")
+    return clicked_day is not None
 
 
 def search_prices_in_json(data, airline_name: str, depth: int = 0) -> list[float]:
-    """在 JSON 数据中递归寻找价格字段"""
-    if depth > 7:
+    """递归在 JSON 中找价格。airline_name 为空时不过滤航司"""
+    if depth > 8:
         return []
     results = []
 
     if isinstance(data, dict):
-        text_vals = " ".join(str(v) for v in data.values() if isinstance(v, str))
-        has_airline = airline_name.lower() in text_vals.lower() if airline_name else True
+        # 检查当前 dict 是否含有航司信息（当 airline_name 非空时）
+        if airline_name:
+            text_vals = " ".join(str(v) for v in data.values() if isinstance(v, str))
+            has_airline = airline_name.lower() in text_vals.lower()
+        else:
+            has_airline = True
 
         for k, v in data.items():
             k_lower = k.lower()
-            if any(p in k_lower for p in ("price", "fare", "amount", "cost", "total")):
+            if any(p in k_lower for p in ("price", "fare", "amount", "cost", "total", "money")):
                 if isinstance(v, (int, float)) and 1000 < v < 100000:
                     if has_airline:
                         results.append(float(v))
+                    elif not airline_name:
+                        results.append(float(v))
             else:
                 results.extend(search_prices_in_json(v, airline_name, depth + 1))
+
     elif isinstance(data, list):
-        for item in data[:100]:
+        for item in data[:150]:
             results.extend(search_prices_in_json(item, airline_name, depth + 1))
 
     return results
 
 
 async def parse_dom_price(page: Page, airline_name: str) -> float | None:
-    """从渲染后 DOM 提取价格，尝试多种选择器"""
+    """从渲染后 DOM 提取价格"""
     price_selectors = [
         "[class*='price-num']",
         "[class*='priceNum']",
@@ -361,7 +466,6 @@ async def parse_dom_price(page: Page, airline_name: str) -> float | None:
         except Exception:
             continue
 
-    # 最后备用：从页面全文航司名附近提取
     if airline_name:
         try:
             body_text = await page.inner_text("body")
