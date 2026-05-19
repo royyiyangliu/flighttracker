@@ -13,6 +13,20 @@
       "quantity": 1,
       "cabin": "y",
       "source": "ceair"
+    },
+    {
+      "id": "PVG-ICN-RT-20260905-20260906",
+      "label": "上海→首尔 往返 (9/5出发 / 9/6返回)",
+      "type": "roundtrip",
+      "departure_id": "PVG",
+      "arrival_id": "ICN",
+      "outbound_date": "2026-09-05",
+      "return_date": "2026-09-06",
+      "airline_filter": "MU",
+      "currency": "CNY",
+      "quantity": 1,
+      "cabin": "y",
+      "source": "ceair"
     }
   ]
 }
