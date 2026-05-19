@@ -229,7 +229,7 @@ function routeHeaderHTML(query) {
 function flightCardsHTML(history, colorMap) {
   const { flight_info = {}, timestamps = [], prices = {}, currency = 'CNY' } = history;
   const sym = currency === 'CNY' ? '¥' : currency + ' ';
-  const fns = Object.keys(flight_info).sort();
+  const fns = Object.keys(flight_info).sort().filter(fn => flight_info[fn]?.direct !== false);
   if (!fns.length) return '<div class="empty-msg">暂无航班数据，等待爬虫首次运行…</div>';
 
   return fns.map((fn, i) => {
@@ -273,7 +273,7 @@ function flightCardsHTML(history, colorMap) {
 function renderChart(history, colorMap, canvasId) {
   const { flight_info = {}, timestamps = [], prices = {}, currency = 'CNY' } = history;
   const sym = currency === 'CNY' ? '¥' : currency + ' ';
-  const fns = Object.keys(flight_info).sort();
+  const fns = Object.keys(flight_info).sort().filter(fn => flight_info[fn]?.direct !== false);
   if (!fns.length || !timestamps.length) return;
 
   const labels   = timestamps.map(tsToBeijing);
@@ -331,7 +331,8 @@ function renderChart(history, colorMap, canvasId) {
 
 // ── 渲染单条航线区块 ─────────────────────────────────────────────
 function renderRouteSection(query, history, sectionIdx) {
-  const fns = Object.keys(history.flight_info || {}).sort();
+  const fns = Object.keys(history.flight_info || {}).sort()
+    .filter(fn => (history.flight_info[fn] || {}).direct !== false);
   const colorMap = {};
   fns.forEach((fn, i) => { colorMap[fn] = FLIGHT_COLORS[i % FLIGHT_COLORS.length]; });
 
