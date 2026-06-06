@@ -2,7 +2,7 @@ name: Flight Ops Daily Update
 
 on:
   schedule:
-    - cron: '0 1 * * *'   # 北京时间 09:00（确保昨日所有航班已落地）
+    - cron: '0 20 * * *'  # 北京时间 04:00（确保昨日所有航班已落地）
   workflow_dispatch:
     inputs:
       days:

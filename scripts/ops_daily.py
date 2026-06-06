@@ -174,10 +174,10 @@ async def discover_from_ceair(target_date: str) -> list[dict]:
             try:
                 await page.goto(url, wait_until="domcontentloaded", timeout=60000)
                 try:
-                    await page.wait_for_function(CEAIR_WAIT_JS, timeout=30000)
+                    await page.wait_for_function(CEAIR_WAIT_JS, timeout=50000)
                 except Exception:
                     log.warning(f"    等待超时，仍尝试解析")
-                await asyncio.sleep(2)
+                await asyncio.sleep(3)   # 每条航线间隔，避免被限速
 
                 raw = await page.evaluate(CEAIR_JS)
                 found = [f for f in raw if f.get("flightNo", "").startswith("MU")]
@@ -368,6 +368,9 @@ def generate_route_jsons():
             dep, arr = row.get("dep_airport", ""), row.get("arr_airport", "")
             if not dep or not arr: continue
             route = f"{dep}-{arr}"
+            # 只保留目标航线（上海↔北京/深圳）
+            if route not in ROUTE_LABELS:
+                continue
             records_by_route.setdefault(route, []).append({
                 "date":       row["date"],
                 "flight":     row["flight"],
