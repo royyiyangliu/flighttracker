@@ -300,7 +300,13 @@ function switchTab(name, btn) {
 // ══════════════════════════════════════════════
 // TAB 1: 航班运营
 // ══════════════════════════════════════════════
-const ROUTES = ['SHA-PEK','SHA-SZX','PVG-PEK','PVG-SZX','SHA-PKX','PVG-PKX'];
+const ROUTES = [
+    'SHA-PEK','SHA-PKX','SHA-SZX',
+    'PVG-PEK','PVG-PKX','PVG-SZX',
+    'PEK-SHA','PEK-PVG',
+    'PKX-SHA','PKX-PVG',
+    'SZX-SHA','SZX-PVG',
+];
 let opsData     = {};
 let activeRoute = null;
 let sortCol     = 'date';
