@@ -18,6 +18,7 @@ import asyncio
 import csv
 import json
 import logging
+import random
 import re
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -168,31 +169,48 @@ async def discover_from_ceair(target_date: str) -> list[dict]:
             await _stealth.apply_stealth_async(page)
             log.info("  [stealth] 已应用")
 
-        for dep, arr in CEAIR_ROUTES:
+        # 随机打乱路线顺序，避免每次都以相同模式请求
+        routes = list(CEAIR_ROUTES)
+        random.shuffle(routes)
+
+        for dep, arr in routes:
             url = f"https://www.ceair.com/zh/cny/shopping/oneway/{dep}-{arr}/{target_date}"
             log.info(f"  {dep}→{arr} …")
-            try:
-                await page.goto(url, wait_until="domcontentloaded", timeout=60000)
+
+            # 最多重试2次
+            for attempt in range(2):
                 try:
-                    await page.wait_for_function(CEAIR_WAIT_JS, timeout=50000)
-                except Exception:
-                    log.warning(f"    等待超时，仍尝试解析")
-                await asyncio.sleep(3)   # 每条航线间隔，避免被限速
+                    await page.goto(url, wait_until="domcontentloaded", timeout=60000)
+                    try:
+                        await page.wait_for_function(CEAIR_WAIT_JS, timeout=50000)
+                    except Exception:
+                        if attempt == 0:
+                            log.warning(f"    等待超时，5秒后重试…")
+                            await asyncio.sleep(5)
+                            continue   # 重试
+                        else:
+                            log.warning(f"    两次超时，跳过")
 
-                raw = await page.evaluate(CEAIR_JS)
-                found = [f for f in raw if f.get("flightNo", "").startswith("MU")]
-                for f in found:
-                    num = f["flightNo"][2:]
-                    confirmed.append({
-                        "airline": "MU", "flight_num": num,
-                        "dep": dep, "arr": arr,
-                        "dep_time": f.get("depTime"),
-                        "arr_time": f.get("arrTime"),
-                    })
-                log.info(f"    → {len(found)} 班: {[f['flightNo'] for f in found]}")
+                    raw = await page.evaluate(CEAIR_JS)
+                    found = [f for f in raw if f.get("flightNo", "").startswith("MU")]
+                    for f in found:
+                        num = f["flightNo"][2:]
+                        confirmed.append({
+                            "airline": "MU", "flight_num": num,
+                            "dep": dep, "arr": arr,
+                            "dep_time": f.get("depTime"),
+                            "arr_time": f.get("arrTime"),
+                        })
+                    log.info(f"    → {len(found)} 班: {[f['flightNo'] for f in found]}")
+                    break   # 成功，跳出重试循环
 
-            except Exception as e:
-                log.warning(f"    {dep}→{arr} 失败: {e}")
+                except Exception as e:
+                    log.warning(f"    {dep}→{arr} 第{attempt+1}次失败: {e}")
+
+            # 随机延迟 8-15 秒，模拟人工操作间隔
+            delay = random.uniform(8, 15)
+            log.info(f"    等待 {delay:.1f}s …")
+            await asyncio.sleep(delay)
 
         await browser.close()
 
