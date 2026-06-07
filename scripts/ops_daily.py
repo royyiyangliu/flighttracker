@@ -228,6 +228,20 @@ async def discover_from_ceair(target_date: str) -> list[dict]:
 # Step 2: FlightView 数据抓取
 # ──────────────────────────────────────────────────────────────
 
+def to24h(hhmm: str, ampm: str | None) -> str:
+    """将 12 小时制时间字符串转为 24 小时制（HH:MM）。"""
+    h, m = map(int, hhmm.split(":"))
+    if ampm:
+        ap = ampm.strip().upper()
+        if ap == "PM" and h != 12:
+            h += 12
+        elif ap == "AM" and h == 12:
+            h = 0
+    return f"{h:02d}:{m:02d}"
+
+# FlightView 时间格式：H:MM AM/PM 或 HH:MM AM/PM（12小时制）
+_TIME_RE = r"(\d{1,2}:\d{2})[\t ]*([AaPp][Mm])?"
+
 def parse_page_text(text: str) -> dict | None:
     if "FLIGHT STATUS" not in text:
         return None
@@ -244,10 +258,10 @@ def parse_page_text(text: str) -> dict | None:
 
     if dep := re.search(r"\nDeparture\n(.*?)\nArrival\n", text, re.DOTALL):
         d = dep.group(1)
-        if m := re.search(r"Scheduled Time:[\t ]+(\d{1,2}:\d{2})", d):
-            r["dep_scheduled"] = m.group(1)
-        if m := re.search(r"Take Off Time:[\t ]+(\d{1,2}:\d{2})", d):
-            r["dep_actual"] = m.group(1)
+        if m := re.search(r"Scheduled Time:[\t ]+" + _TIME_RE, d):
+            r["dep_scheduled"] = to24h(m.group(1), m.group(2))
+        if m := re.search(r"Take Off Time:[\t ]+" + _TIME_RE, d):
+            r["dep_actual"] = to24h(m.group(1), m.group(2))
         if m := re.search(r"Terminal:[\t ]+(.+)", d):
             r["dep_terminal"] = m.group(1).strip()
         if m := re.search(r"Gate:[\t ]+(.+)", d):
@@ -257,10 +271,10 @@ def parse_page_text(text: str) -> dict | None:
         a = arr.group(1)
         if m := re.search(r"Airport[\t ]+.+\((\w{3})\)", a):
             r["arr_airport"] = m.group(1)
-        if m := re.search(r"Scheduled Time:[\t ]+(\d{1,2}:\d{2})", a):
-            r["arr_scheduled"] = m.group(1)
-        if m := re.search(r"At Gate Time:[\t ]+(\d{1,2}:\d{2})", a):
-            r["arr_actual"] = m.group(1)
+        if m := re.search(r"Scheduled Time:[\t ]+" + _TIME_RE, a):
+            r["arr_scheduled"] = to24h(m.group(1), m.group(2))
+        if m := re.search(r"At Gate Time:[\t ]+" + _TIME_RE, a):
+            r["arr_actual"] = to24h(m.group(1), m.group(2))
         if m := re.search(r"Terminal:[\t ]+(.+)", a):
             r["arr_terminal"] = m.group(1).strip()
 
