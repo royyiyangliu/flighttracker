@@ -6,9 +6,9 @@ on:
   workflow_dispatch:
     inputs:
       days:
-        description: '回溯天数（默认1=只抓昨天，首次运行填60）'
+        description: '回溯天数（默认2=抓昨天+前天，首次运行填60）'
         required: false
-        default: '1'
+        default: '2'
       skip_discover:
         description: '跳过航班发现步骤 (true/false)'
         required: false
@@ -37,7 +37,7 @@ jobs:
 
       - name: Run ops scraper
         run: |
-          DAYS=${{ github.event.inputs.days || '1' }}
+          DAYS=${{ github.event.inputs.days || '2' }}
           SKIP=${{ github.event.inputs.skip_discover || 'false' }}
           if [ "$SKIP" = "true" ]; then
             python scripts/ops_daily.py --days $DAYS --skip-discover
