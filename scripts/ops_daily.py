@@ -20,8 +20,14 @@ import json
 import logging
 import random
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+BEIJING_TZ = timezone(timedelta(hours=8))
+
+def beijing_now() -> datetime:
+    """返回当前北京时间（UTC+8）"""
+    return datetime.now(tz=BEIJING_TZ)
 
 from playwright.async_api import async_playwright
 
@@ -293,7 +299,7 @@ async def fetch_one(page, airline, num, date_str, dep) -> dict | None:
                 "date":        date_str,
                 "flight":      f"{airline}{num}",
                 "dep_airport": dep,
-                "scraped_at":  datetime.now().strftime("%Y-%m-%d %H:%M"),
+                "scraped_at":  beijing_now().strftime("%Y-%m-%d %H:%M"),
             })
         return parsed
     except Exception as e:
@@ -405,7 +411,7 @@ def generate_route_jsons():
                 "arr_t": row.get("arr_terminal", ""),
             })
 
-    today = datetime.now().strftime("%Y-%m-%d")
+    today = beijing_now().strftime("%Y-%m-%d")
     for route, records in records_by_route.items():
         records.sort(key=lambda r: (r["date"], r["flight"]), reverse=True)
         out = {
@@ -441,7 +447,7 @@ def main():
             flights = json.load(f)
 
     if not args.skip_discover:
-        tomorrow = (datetime.now().date() + timedelta(days=1)).strftime("%Y-%m-%d")
+        tomorrow = (beijing_now().date() + timedelta(days=1)).strftime("%Y-%m-%d")
         log.info(f"从 ceair.com 获取 {tomorrow} 的 MU 航班号（共 {len(CEAIR_ROUTES)} 条航线）…")
         new_flights = asyncio.run(discover_from_ceair(tomorrow))
 
@@ -462,7 +468,7 @@ def main():
     log.info(f"本次使用航班数：{len(flights)} 条")
 
     # ── Step 2: 爬 FlightView 历史数据 ──
-    today = datetime.now().date()
+    today = beijing_now().date()
     dates = [
         (today - timedelta(days=i)).strftime("%Y%m%d")
         for i in range(1, args.days + 1)
