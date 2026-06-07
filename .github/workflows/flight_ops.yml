@@ -49,6 +49,7 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase   # 避免并发推送时 non-fast-forward 失败
           git add data/ops/
           git diff --cached --quiet && echo "无变更，跳过提交" || \
             git commit -m "ops: update flight data $(date -u +'%Y-%m-%d')" && git push
