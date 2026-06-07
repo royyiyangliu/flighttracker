@@ -119,6 +119,15 @@
 
     .empty-msg { text-align: center; padding: 48px 20px; color: #adb5bd; font-size: 0.9rem; }
 
+    /* ── Bar chart tooltip ── */
+    #bar-tip {
+      position: fixed; z-index: 9999; pointer-events: none; display: none;
+      background: rgba(26,26,46,.93); color: #fff;
+      padding: 7px 11px; border-radius: 7px; font-size: 0.78rem; line-height: 1.6;
+      white-space: nowrap; box-shadow: 0 3px 10px rgba(0,0,0,.25);
+    }
+    #bar-tip .tip-date { color: #8898aa; font-size: .72rem; }
+
     /* ── Tab 2: 价格 ── */
     .route-section { margin-bottom: 40px; }
     .route-header {
@@ -248,6 +257,8 @@
   <footer id="footer"></footer>
 </div>
 
+<div id="bar-tip"></div>
+
 <script>
 /* ════════════════════════════════════════════
    公共
@@ -344,7 +355,7 @@ function barChart(delayMap, gmax) {
     const rawH = gmax>0 ? (Math.max(0,d)/gmax)*H : 0;
     const h = Math.max(2, Math.round(rawH));
     const y = H - h;
-    svg += `<rect x="${i*step}" y="${y}" width="${bw}" height="${h}" fill="${delayColor(d)}" rx="0.5"/>`;
+    svg += `<rect x="${i*step}" y="${y}" width="${bw}" height="${h}" fill="${delayColor(d)}" rx="0.5" data-d="${ds}" data-v="${d}" style="cursor:crosshair"/>`;
   }
   return `<svg width="${W}" height="${H}" style="display:block;vertical-align:middle">${svg}</svg>`;
 }
@@ -691,6 +702,43 @@ async function loadPriceTab(){
     ?`数据最后更新：${tsToBeijing(lt)}（北京时间）`
     :`页面加载时间：${new Date().toLocaleString('zh-CN')}`;
 }
+
+/* ── 柱状图 Tooltip ── */
+(function () {
+  const tip = document.getElementById('bar-tip');
+
+  function moveTip(e) {
+    const pad = 14, w = 150, h = 52;
+    let x = e.clientX + pad, y = e.clientY + pad;
+    if (x + w > window.innerWidth)  x = e.clientX - w - pad;
+    if (y + h > window.innerHeight) y = e.clientY - h - pad;
+    tip.style.left = x + 'px';
+    tip.style.top  = y + 'px';
+  }
+
+  document.getElementById('ops-tbody').addEventListener('mouseover', e => {
+    const rect = e.target;
+    if (rect.tagName !== 'rect' || !rect.dataset.d) return;
+    const ds  = rect.dataset.d;
+    const val = parseFloat(rect.dataset.v);
+    const mo  = parseInt(ds.slice(4, 6));
+    const da  = parseInt(ds.slice(6, 8));
+    const valLabel = val <= 0
+      ? `<span style="color:#1cc88a">提前 ${Math.abs(Math.round(val))} 分钟</span>`
+      : `<span style="color:${delayColor(val)}">${val > 0 ? '+' : ''}${Math.round(val)} 分钟</span>`;
+    tip.innerHTML = `<div class="tip-date">${mo}月${da}日</div><div>落地延误：${valLabel}</div>`;
+    tip.style.display = 'block';
+    moveTip(e);
+  });
+
+  document.getElementById('ops-tbody').addEventListener('mousemove', e => {
+    if (e.target.tagName === 'rect' && e.target.dataset.d) moveTip(e);
+  });
+
+  document.getElementById('ops-tbody').addEventListener('mouseout', e => {
+    if (e.target.tagName === 'rect') tip.style.display = 'none';
+  });
+})();
 
 /* ── 启动 ── */
 loadOpsData();
