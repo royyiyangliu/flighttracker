@@ -163,6 +163,45 @@
     .chart-subtitle { font-size: .75rem; color: #adb5bd; }
     .chart-inner    { position: relative; height: 300px; }
     footer { text-align: center; font-size: .72rem; color: #adb5bd; padding: 8px 0 28px; }
+
+    /* ── Widebody row highlight ── */
+    .wide-row { background: #eef2ff !important; }
+    .wide-row:hover { background: #e4eaff !important; }
+
+    /* ── Aircraft comfort badge ── */
+    .ac-badge {
+      display: block; margin-top: 3px;
+      font-size: .68rem; color: #6c757d; white-space: nowrap; letter-spacing: .01em;
+    }
+
+    /* ── Aircraft info tooltip ── */
+    #ac-tip {
+      position: fixed; z-index: 9999; pointer-events: none; display: none;
+      background: rgba(22,33,62,.97); color: #dde4f0;
+      padding: 12px 15px; border-radius: 10px; font-size: 0.78rem; line-height: 1.75;
+      min-width: 230px; max-width: 290px; white-space: normal;
+      box-shadow: 0 6px 20px rgba(0,0,0,.35);
+    }
+    #ac-tip .tip-title { color: #fff; font-weight: 700; font-size: .86rem; margin-bottom: 7px; padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,.13); }
+    #ac-tip .tip-section { color: #7a9cc0; font-size: .68rem; text-transform: uppercase; letter-spacing: .07em; margin: 8px 0 3px; }
+    #ac-tip .tip-row { display: flex; justify-content: space-between; gap: 10px; }
+    #ac-tip .tip-label { color: #8898aa; flex-shrink: 0; }
+    #ac-tip .tip-stars { color: #f6c23e; font-weight: 600; }
+    #ac-tip .tip-val { text-align: right; }
+    #ac-tip .tip-note { color: #a8bcd8; font-style: italic; font-size: .72rem; }
+    #ac-tip .tip-seats { color: #7a9cc0; font-size: .72rem; margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,.1); }
+
+    /* ── Legend box ── */
+    .legend-box {
+      display: flex; align-items: flex-start; gap: 20px; flex-wrap: wrap;
+      background: #fff; border: 1px solid #e9ecef; border-radius: 10px;
+      padding: 10px 16px; margin-bottom: 14px; font-size: .77rem; color: #6c757d;
+    }
+    .legend-block { display: flex; flex-direction: column; gap: 3px; }
+    .legend-title { font-size: .69rem; font-weight: 700; color: #495057; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 2px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .legend-swatch { width: 13px; height: 13px; border-radius: 3px; flex-shrink: 0; }
+    .legend-sep { width: 1px; background: #e9ecef; align-self: stretch; margin: 0 2px; }
   </style>
 </head>
 <body>
@@ -200,6 +239,13 @@
           <option value="0">全部</option>
         </select>
       </div>
+      <div class="filter-sep"></div>
+      <div class="filter-group">
+        <span class="filter-label">机身：</span>
+        <button class="apt-btn active" id="body-all"    onclick="setBodyFilter('all',this)">全部</button>
+        <button class="apt-btn"        id="body-wide"   onclick="setBodyFilter('wide',this)">宽体</button>
+        <button class="apt-btn"        id="body-narrow" onclick="setBodyFilter('narrow',this)">窄体</button>
+      </div>
     </div>
 
     <div class="stats-row" id="stats-row" style="display:none">
@@ -222,6 +268,20 @@
         <div class="stat-label">有效样本</div>
         <div class="stat-value" id="s-count" style="font-size:1.1rem">—</div>
         <div class="stat-sub" id="s-count-sub"></div>
+      </div>
+    </div>
+
+    <div class="legend-box" id="legend-box" style="display:none">
+      <div class="legend-block">
+        <div class="legend-title">机身类型</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:#c7d4ff;border:1px solid #b0bfff"></span>宽体机（过道较宽，空间宽敞）</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:#f8f9fc;border:1px solid #dee2e6"></span>窄体机</div>
+      </div>
+      <div class="legend-sep"></div>
+      <div class="legend-block">
+        <div class="legend-title">舒适度评级（经济舱 / 商务舱）</div>
+        <div>1★ 老旧　2★ 标准　3★ 较好　4★ 宽敞　5★ 旗舰</div>
+        <div style="margin-top:2px;color:#adb5bd;font-size:.7rem">💡 鼠标悬停机型名称可查看座位详情</div>
       </div>
     </div>
 
@@ -258,6 +318,7 @@
 </div>
 
 <div id="bar-tip"></div>
+<div id="ac-tip"></div>
 
 <script>
 /* ════════════════════════════════════════════
@@ -273,6 +334,44 @@ function switchTab(name, btn) {
 /* ════════════════════════════════════════════
    TAB 1 — 航班运营
 ════════════════════════════════════════════ */
+
+/* ── Aircraft comfort data ── */
+const AIRCRAFT_INFO = {
+  'A319':     {wide:false,eco_layout:'3-3（6座/排）',eco_pitch:'32"',eco_width:'18"',eco_stars:3,eco_note:'窄体中间距/座宽最好',biz_layout:'2-2（8席）',biz_type:'倾斜式',biz_stars:2,biz_note:'不可平躺，短途够用',seats:122},
+  'A320':     {wide:false,eco_layout:'3-3（6座/排）',eco_pitch:'30-31"',eco_width:'17-18"',eco_stars:2,eco_note:'标准窄体',biz_layout:'2-2（8席）',biz_type:'倾斜式',biz_stars:2,biz_note:'不可平躺，短途够用',seats:158},
+  'A320neo':  {wide:false,eco_layout:'3-3（6座/排）',eco_pitch:'30-31"',eco_width:'17-18"',eco_stars:3,eco_note:'同A320，客舱噪音更低',biz_layout:'2-2（8席）',biz_type:'倾斜式',biz_stars:2,biz_note:'不可平躺，短途够用',seats:164},
+  'A321':     {wide:false,eco_layout:'3-3（6座/排）',eco_pitch:'31-32"',eco_width:'17-18"',eco_stars:2,eco_note:'标准窄体',biz_layout:'2-2（12-20席）',biz_type:'倾斜式',biz_stars:2,biz_note:'不可平躺，短途够用',seats:180},
+  'A330-200': {wide:true, eco_layout:'2-4-2（8座/排）',eco_pitch:'32-33"',eco_width:'18"',eco_stars:4,eco_note:'靠窗仅2座并排，经济舱体感宽敞',biz_layout:'2-2-2（旧版）',biz_type:'角度平躺',biz_stars:3,biz_note:'角度平躺，不可完全平躺',seats:232},
+  'A330-300': {wide:true, eco_layout:'2-4-2（8座/排）',eco_pitch:'32-33"',eco_width:'18"',eco_stars:4,eco_note:'靠窗仅2座并排，经济舱体感宽敞',biz_layout:'2-2-2（38席）',biz_type:'角度平躺',biz_stars:3,biz_note:'角度平躺，适合国内中长途',seats:300},
+  'A350-900': {wide:true, eco_layout:'3-3-3（9座/排）',eco_pitch:'31-32"',eco_width:'18"',eco_stars:4,eco_note:'宽体，大窗低噪高气压，乘坐感优',biz_layout:'1-2-1（36席）',biz_type:'全平躺＋隐私滑门',biz_stars:5,biz_note:'旗舰级，全平躺，直通走道',seats:288},
+  '737-300':  {wide:false,eco_layout:'3-3（6座/排）',eco_pitch:'31"',eco_width:'17"',eco_stars:1,eco_note:'老旧机型，已退役',biz_layout:'2-2（8席）',biz_type:'倾斜式',biz_stars:1,biz_note:'已退役',seats:128},
+  '737-500':  {wide:false,eco_layout:'3-3（6座/排）',eco_pitch:'31"',eco_width:'17"',eco_stars:2,eco_note:'老旧机型，即将退役',biz_layout:'2-2（8席）',biz_type:'倾斜式',biz_stars:2,biz_note:'不可平躺',seats:146},
+  '737-700':  {wide:false,eco_layout:'3-3（6座/排）',eco_pitch:'32"',eco_width:'17"',eco_stars:3,eco_note:'窄体中间距略宽',biz_layout:'2-2（8席）',biz_type:'倾斜式',biz_stars:2,biz_note:'不可平躺，短途够用',seats:134},
+  '737-800':  {wide:false,eco_layout:'3-3（6座/排）',eco_pitch:'31"',eco_width:'17"',eco_stars:2,eco_note:'标准窄体',biz_layout:'2-2（8-20席）',biz_type:'倾斜式',biz_stars:2,biz_note:'不可平躺，短途够用',seats:176},
+  '737MAX 8': {wide:false,eco_layout:'3-3（6座/排）',eco_pitch:'30"',eco_width:'17"',eco_stars:2,eco_note:'间距最小，配备USB充电',biz_layout:'2-2（8席）',biz_type:'倾斜式',biz_stars:2,biz_note:'不可平躺，短途够用',seats:176},
+  '777-300ER':{wide:true, eco_layout:'3-4-3（10座/排）',eco_pitch:'32"',eco_width:'17"',eco_stars:3,eco_note:'宽体但机队最密，中排4座',biz_layout:'1-2-1（52席）',biz_type:'全平躺，反鱼骨式',biz_stars:4,biz_note:'全平躺，直通走道，私密性强',seats:316},
+  '787-9':    {wide:true, eco_layout:'3-3-3（9座/排）',eco_pitch:'31-32"',eco_width:'17-18"',eco_stars:4,eco_note:'宽体，大窗/低噪/高气压，体感最佳',biz_layout:'1-2-1（26席＋4席头等）',biz_type:'全平躺＋隐私滑门',biz_stars:5,biz_note:'全平躺，直通走道，设独立头等舱',seats:285},
+  'C919':     {wide:false,eco_layout:'3-3（6座/排）',eco_pitch:'30"',eco_width:'18"',eco_stars:3,eco_note:'国产新机，全新内饰，座宽略好',biz_layout:'2-2（8席）',biz_type:'倾斜式',biz_stars:2,biz_note:'全新国产，不可平躺',seats:164},
+};
+
+function lookupAircraft(raw) {
+  if (!raw || raw === '—') return null;
+  const s = raw
+    .replace(/^(Airbus|Boeing|Comac)\s+/i, '')
+    .replace(/\s*\(winglets?\)pax\s*/gi, '')
+    .replace(/\s*\(winglets?\)\s*/gi, '')
+    .replace(/\s*pax\s*$/i, '')
+    .replace(/\s*Passenger\s*$/i, '')
+    .replace(/\s+Dreamliner\s*/i, '')
+    .replace(/MAX\s+/i, 'MAX ')
+    .trim();
+  if (AIRCRAFT_INFO[s]) return AIRCRAFT_INFO[s];
+  for (const key of Object.keys(AIRCRAFT_INFO)) {
+    if (s.startsWith(key) || key.startsWith(s)) return AIRCRAFT_INFO[key];
+  }
+  return null;
+}
+function isWidebody(raw) { return lookupAircraft(raw)?.wide === true; }
 
 const CITY_PAIRS = [
   { id:'SH-BJ', label:'上海 → 北京',
@@ -295,12 +394,20 @@ const CITY_PAIRS = [
 
 const SHORT = {SHA:'虹桥',PVG:'浦东',PEK:'首都',PKX:'大兴',SZX:'宝安'};
 
-let opsData  = {};
-let pair     = null;
-let selDep   = new Set();
-let selArr   = new Set();
-let sortCol  = 'dep_sched';
-let sortAsc  = true;
+let opsData    = {};
+let pair       = null;
+let selDep     = new Set();
+let selArr     = new Set();
+let sortCol    = 'dep_sched';
+let sortAsc    = true;
+let filterBody = 'all'; // 'all' | 'wide' | 'narrow'
+
+function setBodyFilter(val, btn) {
+  filterBody = val;
+  ['body-all','body-wide','body-narrow'].forEach(id => document.getElementById(id)?.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
 
 /* ── 工具 ── */
 function bjDate(daysAgo) {
@@ -398,6 +505,7 @@ function selectPair(id) {
 
 function buildFilters() {
   document.getElementById('ops-filters').style.display = 'flex';
+  document.getElementById('legend-box').style.display  = 'flex';
 
   function buildGroup(elId, sepId, airports, selSet, type) {
     const grp = document.getElementById(elId);
@@ -459,9 +567,9 @@ function render() {
     if (fmap.has(r.flight)) fmap.get(r.flight).fil.push(r);
   }
 
-  // 计算每航班统计，同时收集60天延误用于全局max
+  // 计算每航班统计
   const rows = [];
-  const chartDates = Array.from({length:60},(_,i)=>bjDate(60-i)); // 60天前→昨天
+  const chartDates = Array.from({length:60},(_,i)=>bjDate(60-i));
 
   for (const [,f] of fmap) {
     const valid = f.fil.filter(r=>r.status!=='Canceled'&&r.arr_delay!=null);
@@ -470,32 +578,32 @@ function render() {
     const aircraft  = modeOf(f.all.map(r=>r.aircraft).filter(Boolean));
     const avg_dep_d = avgOf(valid.map(r=>r.dep_delay));
     const avg_arr_d = avgOf(valid.map(r=>r.arr_delay));
-
-    // 60天延误序列
     const dmap = new Map();
     for (const r of f.all) {
       if (r.arr_delay!=null && r.status!=='Canceled') dmap.set(r.date, r.arr_delay);
     }
-
     rows.push({
-      flight: f.flight,
-      dep: f.dep, arr: f.arr,
+      flight: f.flight, dep: f.dep, arr: f.arr,
       route: f.dep+'-'+f.arr,
       aircraft: aircraft||'—',
-      dep_sched: dep_sched||'—',
-      arr_sched: arr_sched||'—',
+      dep_sched: dep_sched||'—', arr_sched: arr_sched||'—',
       dep_sched_min: t2m(dep_sched),
-      avg_dep_actual: (t2m(dep_sched)!=null&&avg_dep_d!=null) ? t2m(dep_sched)+avg_dep_d : null,
-      avg_arr_actual: (t2m(arr_sched)!=null&&avg_arr_d!=null) ? t2m(arr_sched)+avg_arr_d : null,
-      avg_delay: avg_arr_d,
-      sample: valid.length,
-      dmap,
+      avg_dep_actual: (t2m(dep_sched)!=null&&avg_dep_d!=null)?t2m(dep_sched)+avg_dep_d:null,
+      avg_arr_actual: (t2m(arr_sched)!=null&&avg_arr_d!=null)?t2m(arr_sched)+avg_arr_d:null,
+      avg_delay: avg_arr_d, sample: valid.length,
+      dmap, valid,
     });
   }
 
-  // 全局最大延误（仅基于近60天）
+  // 机身类型筛选
+  const rowsShown = filterBody==='all' ? rows : rows.filter(f => {
+    const wide = isWidebody(f.aircraft);
+    return filterBody==='wide' ? wide : !wide;
+  });
+
+  // 全局最大延误
   let gmax = 0;
-  for (const row of rows) {
+  for (const row of rowsShown) {
     for (const ds of chartDates) {
       const v = row.dmap.get(ds);
       if (v!=null && v>gmax) gmax = v;
@@ -503,7 +611,7 @@ function render() {
   }
 
   // 排序
-  rows.sort((a,b) => {
+  rowsShown.sort((a,b) => {
     let va, vb;
     if (sortCol==='dep_sched') { va=a.dep_sched_min??9999; vb=b.dep_sched_min??9999; }
     else if (sortCol==='avg_delay') { va=a.avg_delay??(sortAsc?Infinity:-Infinity); vb=b.avg_delay??(sortAsc?Infinity:-Infinity); }
@@ -511,16 +619,16 @@ function render() {
     return va<vb?(sortAsc?-1:1):va>vb?(sortAsc?1:-1):0;
   });
 
-  // 统计卡片
-  const valid = recFil.filter(r=>r.status!=='Canceled'&&r.arr_delay!=null);
-  const n = valid.length;
+  // 统计卡片（基于筛选后的航班）
+  const validAll = rowsShown.flatMap(f => f.valid);
+  const n = validAll.length;
   document.getElementById('stats-row').style.display = 'grid';
-  document.getElementById('s-ontime').textContent = n ? Math.round(valid.filter(r=>r.arr_delay<=15).length/n*100)+'%' : '—';
+  document.getElementById('s-ontime').textContent = n ? Math.round(validAll.filter(r=>r.arr_delay<=15).length/n*100)+'%' : '—';
   const avgEl = document.getElementById('s-avg');
-  const avgD  = avgOf(valid.map(r=>r.arr_delay));
+  const avgD  = avgOf(validAll.map(r=>r.arr_delay));
   avgEl.textContent = avgD!=null ? (avgD>=0?'+':'')+Math.round(avgD) : '—';
   avgEl.style.color = avgD>30?'#e74a3b':avgD>0?'#f6c23e':'#1cc88a';
-  document.getElementById('s-heavy').textContent = n ? Math.round(valid.filter(r=>r.arr_delay>60).length/n*100)+'%' : '—';
+  document.getElementById('s-heavy').textContent = n ? Math.round(validAll.filter(r=>r.arr_delay>60).length/n*100)+'%' : '—';
   document.getElementById('s-count').textContent = n||'—';
   document.getElementById('s-count-sub').textContent = n?'条有效记录':'';
 
@@ -529,16 +637,21 @@ function render() {
   const empty = document.getElementById('ops-empty');
   const tbody = document.getElementById('ops-tbody');
 
-  if (!rows.length) { wrap.style.display='none'; empty.style.display='block'; return; }
+  if (!rowsShown.length) { wrap.style.display='none'; empty.style.display='block'; return; }
   wrap.style.display='block'; empty.style.display='none';
-  document.getElementById('tbl-count').textContent = rows.length+' 条航班';
+  document.getElementById('tbl-count').textContent = rowsShown.length+' 条航班';
 
-  tbody.innerHTML = rows.map(f => {
-    const ds = SHORT[f.dep]+'('+f.dep+') → '+SHORT[f.arr]+'('+f.arr+')';
-    return `<tr>
+  tbody.innerHTML = rowsShown.map(f => {
+    const ds   = SHORT[f.dep]+'('+f.dep+') → '+SHORT[f.arr]+'('+f.arr+')';
+    const info = lookupAircraft(f.aircraft);
+    const wideClass = info?.wide ? ' class="wide-row"' : '';
+    const badge = info
+      ? `<span class="ac-badge">经济 ${info.eco_stars}★ | 商务 ${info.biz_stars}★</span>`
+      : '';
+    return `<tr${wideClass}>
       <td><strong>${f.flight}</strong></td>
       <td style="color:#6c757d;font-size:.8rem">${ds}</td>
-      <td>${f.aircraft}</td>
+      <td data-ac="${f.aircraft.replace(/"/g,'&quot;')}">${f.aircraft}${badge}</td>
       <td style="color:#495057;font-size:.8rem">${f.dep_sched} / ${f.arr_sched}</td>
       <td style="color:#495057;font-size:.8rem">${m2t(f.avg_dep_actual)} / ${m2t(f.avg_arr_actual)}</td>
       <td>${delayBadge(f.avg_delay)}<br><span style="font-size:.67rem;color:#c0c4cc">${f.sample}班</span></td>
@@ -737,6 +850,51 @@ async function loadPriceTab(){
 
   document.getElementById('ops-tbody').addEventListener('mouseout', e => {
     if (e.target.tagName === 'rect') tip.style.display = 'none';
+  });
+})();
+
+/* ── Aircraft info tooltip ── */
+(function () {
+  const tip = document.getElementById('ac-tip');
+
+  function moveTip(e) {
+    const pad = 14, w = 290, h = 220;
+    let x = e.clientX + pad, y = e.clientY + pad;
+    if (x + w > window.innerWidth)  x = e.clientX - w - pad;
+    if (y + h > window.innerHeight) y = e.clientY - h - pad;
+    tip.style.left = x + 'px';
+    tip.style.top  = y + 'px';
+  }
+
+  document.getElementById('ops-tbody').addEventListener('mouseover', e => {
+    const td = e.target.closest('td[data-ac]');
+    if (!td) { tip.style.display = 'none'; return; }
+    const info = lookupAircraft(td.dataset.ac);
+    if (!info) { tip.style.display = 'none'; return; }
+    const bodyLabel = info.wide ? '宽体机' : '窄体机';
+    tip.innerHTML = `
+      <div class="tip-title">${td.dataset.ac} · ${bodyLabel}</div>
+      <div class="tip-section">经济舱</div>
+      <div class="tip-row"><span class="tip-label">座位排布</span><span class="tip-val">${info.eco_layout}</span></div>
+      <div class="tip-row"><span class="tip-label">座椅间距</span><span class="tip-val">${info.eco_pitch}</span></div>
+      <div class="tip-row"><span class="tip-label">座椅宽度</span><span class="tip-val">${info.eco_width}</span></div>
+      <div class="tip-row"><span class="tip-label">舒适度</span><span class="tip-val"><span class="tip-stars">${info.eco_stars}★</span> <span class="tip-note">${info.eco_note}</span></span></div>
+      <div class="tip-section">商务舱</div>
+      <div class="tip-row"><span class="tip-label">座位排布</span><span class="tip-val">${info.biz_layout}</span></div>
+      <div class="tip-row"><span class="tip-label">座椅类型</span><span class="tip-val">${info.biz_type}</span></div>
+      <div class="tip-row"><span class="tip-label">舒适度</span><span class="tip-val"><span class="tip-stars">${info.biz_stars}★</span> <span class="tip-note">${info.biz_note}</span></span></div>
+      <div class="tip-seats">典型总座位数：${info.seats} 席</div>`;
+    tip.style.display = 'block';
+    moveTip(e);
+  });
+
+  document.getElementById('ops-tbody').addEventListener('mousemove', e => {
+    if (e.target.closest('td[data-ac]')) moveTip(e);
+    else tip.style.display = 'none';
+  });
+
+  document.getElementById('ops-tbody').addEventListener('mouseleave', () => {
+    tip.style.display = 'none';
   });
 })();
 
