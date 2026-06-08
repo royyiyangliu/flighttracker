@@ -290,7 +290,8 @@ def parse_page_text(text: str) -> dict | None:
         s, a = to_min(r[sk]), to_min(r[ak])
         if s is not None and a is not None:
             diff = a - s
-            if diff < -360: diff += 1440
+            if diff < -360: diff += 1440   # 实际在次日，计划在当天
+            if diff > 1080: diff -= 1440   # 实际在当天，计划在次日
             r[dk] = diff
 
     return r
