@@ -49,7 +49,9 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git pull --rebase   # 避免并发推送时 non-fast-forward 失败
+          git stash --include-untracked          # 先把爬虫产生的文件临时藏起来
+          git pull --rebase                      # 拉取远端最新（避免 non-fast-forward）
+          git stash pop                          # 恢复爬虫数据
           git add data/ops/
           git diff --cached --quiet && echo "无变更，跳过提交" || \
             git commit -m "ops: update flight data $(date -u +'%Y-%m-%d')" && git push
