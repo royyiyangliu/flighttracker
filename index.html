@@ -450,7 +450,7 @@ function delayBadge(d) {
 }
 
 /* ── 柱状图 ── */
-function barChart(delayMap, gmax) {
+function barChart(delayMap, gmax, suspended) {
   const W=181, H=40, bw=2, gap=1, step=3;
   // 基准线
   let svg = `<line x1="0" y1="${H}" x2="${W}" y2="${H}" stroke="#e9ecef" stroke-width="1"/>`;
@@ -463,6 +463,9 @@ function barChart(delayMap, gmax) {
     const h = Math.max(2, Math.round(rawH));
     const y = H - h;
     svg += `<rect x="${i*step}" y="${y}" width="${bw}" height="${h}" fill="${delayColor(d)}" rx="0.5" data-d="${ds}" data-v="${d}" style="cursor:crosshair"/>`;
+  }
+  if (suspended) {
+    svg += `<text x="${W-2}" y="${Math.round(H*0.62)}" text-anchor="end" fill="#e74a3b" font-size="9" font-weight="700" font-family="-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif" pointer-events="none">可能停飞</text>`;
   }
   return `<svg width="${W}" height="${H}" style="display:block;vertical-align:middle">${svg}</svg>`;
 }
@@ -582,6 +585,8 @@ function render() {
     for (const r of f.all) {
       if (r.arr_delay!=null && r.status!=='Canceled') dmap.set(r.date, r.arr_delay);
     }
+    const last14 = Array.from({length:14}, (_,i) => bjDate(i+1));
+    const noArrData14 = f.all.length > 0 && !last14.some(d => dmap.has(d));
     rows.push({
       flight: f.flight, dep: f.dep, arr: f.arr,
       route: f.dep+'-'+f.arr,
@@ -591,7 +596,7 @@ function render() {
       avg_dep_actual: (t2m(dep_sched)!=null&&avg_dep_d!=null)?t2m(dep_sched)+avg_dep_d:null,
       avg_arr_actual: (t2m(arr_sched)!=null&&avg_arr_d!=null)?t2m(arr_sched)+avg_arr_d:null,
       avg_delay: avg_arr_d, sample: valid.length,
-      dmap, valid,
+      dmap, valid, noArrData14,
     });
   }
 
@@ -655,7 +660,7 @@ function render() {
       <td style="color:#495057;font-size:.8rem">${f.dep_sched} / ${f.arr_sched}</td>
       <td style="color:#495057;font-size:.8rem">${m2t(f.avg_dep_actual)} / ${m2t(f.avg_arr_actual)}</td>
       <td>${delayBadge(f.avg_delay)}<br><span style="font-size:.67rem;color:#c0c4cc">${f.sample}班</span></td>
-      <td style="padding:6px 12px">${barChart(f.dmap, gmax)}</td>
+      <td style="padding:6px 12px">${barChart(f.dmap, gmax, f.noArrData14)}</td>
     </tr>`;
   }).join('');
 }

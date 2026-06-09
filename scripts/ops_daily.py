@@ -467,12 +467,24 @@ def main():
         new_flights = asyncio.run(discover_from_ceair(tomorrow))
 
         if new_flights:
-            # 完全替换为 ceair.com 的结果（最新官方数据）
-            flights = new_flights
+            # 合并到现有列表（只增不减）：以 (flight_num, dep) 为唯一键
+            existing_keys = {(f["flight_num"], f["dep"]): i for i, f in enumerate(flights)}
+            added = 0
+            for nf in new_flights:
+                key = (nf["flight_num"], nf["dep"])
+                if key not in existing_keys:
+                    flights.append(nf)
+                    existing_keys[key] = len(flights) - 1
+                    added += 1
+                else:
+                    # 更新到达机场和时刻（航班调整时同步）
+                    idx = existing_keys[key]
+                    for k in ("arr", "dep_time", "arr_time"):
+                        flights[idx][k] = nf[k]
             flights.sort(key=lambda x: (x["dep"], x["arr"], x["flight_num"]))
             with open(FLIGHTS_FILE, "w", encoding="utf-8") as f:
                 json.dump(flights, f, ensure_ascii=False, indent=2)
-            log.info(f"flights_list.json 已更新：{len(flights)} 条")
+            log.info(f"flights_list.json 已更新：{len(flights)} 条（新增 {added} 条）")
         else:
             log.warning("ceair.com 发现失败，回退使用现有 flights_list.json")
 
