@@ -5,7 +5,7 @@
     "dep": "PEK",
     "arr": "PVG",
     "dep_time": "07:00",
-    "arr_time": "08:55"
+    "arr_time": "09:05"
   },
   {
     "airline": "MU",
@@ -29,7 +29,7 @@
     "dep": "PEK",
     "arr": "PVG",
     "dep_time": "14:30",
-    "arr_time": "17:10"
+    "arr_time": "16:55"
   },
   {
     "airline": "MU",
@@ -141,7 +141,7 @@
     "dep": "PEK",
     "arr": "SHA",
     "dep_time": "20:00",
-    "arr_time": "21:55"
+    "arr_time": "22:10"
   },
   {
     "airline": "MU",
@@ -149,7 +149,7 @@
     "dep": "PEK",
     "arr": "SHA",
     "dep_time": "21:00",
-    "arr_time": "22:55"
+    "arr_time": "23:10"
   },
   {
     "airline": "MU",
@@ -197,7 +197,7 @@
     "dep": "PKX",
     "arr": "PVG",
     "dep_time": "08:00",
-    "arr_time": "15:25"
+    "arr_time": "15:55"
   },
   {
     "airline": "MU",
@@ -221,7 +221,7 @@
     "dep": "PKX",
     "arr": "PVG",
     "dep_time": "10:00",
-    "arr_time": "15:25"
+    "arr_time": "15:55"
   },
   {
     "airline": "MU",
@@ -317,7 +317,7 @@
     "dep": "PKX",
     "arr": "PVG",
     "dep_time": "07:55",
-    "arr_time": "15:05"
+    "arr_time": "14:50"
   },
   {
     "airline": "MU",
@@ -444,7 +444,7 @@
     "flight_num": "6685",
     "dep": "PKX",
     "arr": "PVG",
-    "dep_time": "15:50",
+    "dep_time": "15:40",
     "arr_time": "23:05"
   },
   {
@@ -469,7 +469,7 @@
     "dep": "PKX",
     "arr": "PVG",
     "dep_time": "12:55",
-    "arr_time": "19:25"
+    "arr_time": "19:30"
   },
   {
     "airline": "MU",
@@ -505,14 +505,6 @@
   },
   {
     "airline": "MU",
-    "flight_num": "9967",
-    "dep": "PKX",
-    "arr": "PVG",
-    "dep_time": "14:35",
-    "arr_time": "21:20"
-  },
-  {
-    "airline": "MU",
     "flight_num": "2021",
     "dep": "PKX",
     "arr": "SHA",
@@ -533,7 +525,7 @@
     "dep": "PKX",
     "arr": "SHA",
     "dep_time": "17:00",
-    "arr_time": "22:25"
+    "arr_time": "23:20"
   },
   {
     "airline": "MU",
@@ -596,7 +588,7 @@
     "flight_num": "6307",
     "dep": "PKX",
     "arr": "SHA",
-    "dep_time": "16:50",
+    "dep_time": "16:15",
     "arr_time": "22:45"
   },
   {
@@ -633,6 +625,14 @@
   },
   {
     "airline": "MU",
+    "flight_num": "9967",
+    "dep": "PKX",
+    "arr": "SHA",
+    "dep_time": "14:35",
+    "arr_time": "20:00"
+  },
+  {
+    "airline": "MU",
     "flight_num": "5151",
     "dep": "PVG",
     "arr": "PEK",
@@ -652,7 +652,7 @@
     "flight_num": "5161",
     "dep": "PVG",
     "arr": "PEK",
-    "dep_time": "15:30",
+    "dep_time": "15:40",
     "arr_time": "18:00"
   },
   {
@@ -676,7 +676,7 @@
     "flight_num": "2163",
     "dep": "PVG",
     "arr": "PKX",
-    "dep_time": "11:25",
+    "dep_time": "11:35",
     "arr_time": "17:50"
   },
   {
@@ -740,7 +740,7 @@
     "flight_num": "5195",
     "dep": "PVG",
     "arr": "PKX",
-    "dep_time": "18:00",
+    "dep_time": "17:55",
     "arr_time": "20:15"
   },
   {
@@ -868,7 +868,7 @@
     "flight_num": "2504",
     "dep": "PVG",
     "arr": "SZX",
-    "dep_time": "08:35",
+    "dep_time": "08:15",
     "arr_time": "20:10"
   },
   {
@@ -893,7 +893,7 @@
     "dep": "PVG",
     "arr": "SZX",
     "dep_time": "22:20",
-    "arr_time": "09:45"
+    "arr_time": "09:40"
   },
   {
     "airline": "MU",
@@ -917,7 +917,7 @@
     "dep": "PVG",
     "arr": "SZX",
     "dep_time": "09:15",
-    "arr_time": "18:30"
+    "arr_time": "16:50"
   },
   {
     "airline": "MU",
@@ -980,7 +980,7 @@
     "flight_num": "5423",
     "dep": "PVG",
     "arr": "SZX",
-    "dep_time": "09:05",
+    "dep_time": "09:00",
     "arr_time": "19:55"
   },
   {
@@ -1005,7 +1005,7 @@
     "dep": "PVG",
     "arr": "SZX",
     "dep_time": "21:15",
-    "arr_time": "11:10"
+    "arr_time": "12:10"
   },
   {
     "airline": "MU",
@@ -1028,7 +1028,7 @@
     "flight_num": "5824",
     "dep": "PVG",
     "arr": "SZX",
-    "dep_time": "06:50",
+    "dep_time": "07:10",
     "arr_time": "16:35"
   },
   {
@@ -1060,7 +1060,7 @@
     "flight_num": "6863",
     "dep": "PVG",
     "arr": "SZX",
-    "dep_time": "06:25",
+    "dep_time": "06:45",
     "arr_time": "16:40"
   },
   {
@@ -1100,7 +1100,7 @@
     "flight_num": "9718",
     "dep": "PVG",
     "arr": "SZX",
-    "dep_time": "08:00",
+    "dep_time": "08:10",
     "arr_time": "21:25"
   },
   {
@@ -1393,6 +1393,14 @@
   },
   {
     "airline": "MU",
+    "flight_num": "5401",
+    "dep": "SHA",
+    "arr": "PKX",
+    "dep_time": "08:15",
+    "arr_time": "15:15"
+  },
+  {
+    "airline": "MU",
     "flight_num": "5409",
     "dep": "SHA",
     "arr": "PKX",
@@ -1422,14 +1430,6 @@
     "arr": "PKX",
     "dep_time": "12:55",
     "arr_time": "19:45"
-  },
-  {
-    "airline": "MU",
-    "flight_num": "6874",
-    "dep": "SHA",
-    "arr": "PKX",
-    "dep_time": "11:20",
-    "arr_time": "13:25"
   },
   {
     "airline": "MU",
@@ -1478,14 +1478,6 @@
     "arr": "PKX",
     "dep_time": "16:00",
     "arr_time": "23:00"
-  },
-  {
-    "airline": "MU",
-    "flight_num": "9191",
-    "dep": "SHA",
-    "arr": "PKX",
-    "dep_time": "17:15",
-    "arr_time": "19:30"
   },
   {
     "airline": "MU",
@@ -1572,7 +1564,7 @@
     "flight_num": "5335",
     "dep": "SHA",
     "arr": "SZX",
-    "dep_time": "10:05",
+    "dep_time": "09:55",
     "arr_time": "12:25"
   },
   {
@@ -1604,7 +1596,7 @@
     "flight_num": "5349",
     "dep": "SHA",
     "arr": "SZX",
-    "dep_time": "16:40",
+    "dep_time": "16:20",
     "arr_time": "18:50"
   },
   {
@@ -1638,14 +1630,6 @@
     "arr": "SZX",
     "dep_time": "20:30",
     "arr_time": "23:00"
-  },
-  {
-    "airline": "MU",
-    "flight_num": "5401",
-    "dep": "SHA",
-    "arr": "SZX",
-    "dep_time": "08:15",
-    "arr_time": "18:00"
   },
   {
     "airline": "MU",
@@ -1694,6 +1678,14 @@
     "arr": "SZX",
     "dep_time": "08:40",
     "arr_time": "16:35"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "6874",
+    "dep": "SHA",
+    "arr": "SZX",
+    "dep_time": "11:20",
+    "arr_time": "18:30"
   },
   {
     "airline": "MU",
@@ -1750,6 +1742,14 @@
     "arr": "SZX",
     "dep_time": "09:40",
     "arr_time": "18:00"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "9191",
+    "dep": "SHA",
+    "arr": "SZX",
+    "dep_time": "17:15",
+    "arr_time": "00:30"
   },
   {
     "airline": "MU",
@@ -1821,7 +1821,7 @@
     "dep": "SZX",
     "arr": "PVG",
     "dep_time": "17:55",
-    "arr_time": "08:15"
+    "arr_time": "08:30"
   },
   {
     "airline": "MU",
@@ -1829,7 +1829,7 @@
     "dep": "SZX",
     "arr": "PVG",
     "dep_time": "07:15",
-    "arr_time": "09:40"
+    "arr_time": "09:45"
   },
   {
     "airline": "MU",
@@ -1845,7 +1845,7 @@
     "dep": "SZX",
     "arr": "PVG",
     "dep_time": "19:00",
-    "arr_time": "21:20"
+    "arr_time": "21:10"
   },
   {
     "airline": "MU",
@@ -1869,7 +1869,7 @@
     "dep": "SZX",
     "arr": "PVG",
     "dep_time": "19:50",
-    "arr_time": "09:05"
+    "arr_time": "08:55"
   },
   {
     "airline": "MU",
@@ -1878,14 +1878,6 @@
     "arr": "PVG",
     "dep_time": "13:40",
     "arr_time": "21:55"
-  },
-  {
-    "airline": "MU",
-    "flight_num": "6296",
-    "dep": "SZX",
-    "arr": "PVG",
-    "dep_time": "13:40",
-    "arr_time": "22:00"
   },
   {
     "airline": "MU",
@@ -1901,7 +1893,7 @@
     "dep": "SZX",
     "arr": "PVG",
     "dep_time": "19:30",
-    "arr_time": "10:10"
+    "arr_time": "08:00"
   },
   {
     "airline": "MU",
@@ -1925,7 +1917,7 @@
     "dep": "SZX",
     "arr": "PVG",
     "dep_time": "21:40",
-    "arr_time": "09:05"
+    "arr_time": "08:55"
   },
   {
     "airline": "MU",
@@ -2065,6 +2057,14 @@
   },
   {
     "airline": "MU",
+    "flight_num": "6296",
+    "dep": "SZX",
+    "arr": "SHA",
+    "dep_time": "13:40",
+    "arr_time": "23:10"
+  },
+  {
+    "airline": "MU",
     "flight_num": "6662",
     "dep": "SZX",
     "arr": "SHA",
@@ -2077,7 +2077,7 @@
     "dep": "SZX",
     "arr": "SHA",
     "dep_time": "10:05",
-    "arr_time": "20:55"
+    "arr_time": "21:05"
   },
   {
     "airline": "MU",
@@ -2101,6 +2101,6 @@
     "dep": "SZX",
     "arr": "SHA",
     "dep_time": "13:25",
-    "arr_time": "20:55"
+    "arr_time": "21:05"
   }
 ]
