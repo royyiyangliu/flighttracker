@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-ops_daily.py - 东航上海↔北京/深圳 航班运营数据抓取
+ops_daily.py - 东航上海↔北京/深圳/广州 航班运营数据抓取
 
 运行方式:
   python scripts/ops_daily.py            # 只抓昨天（每日定时运行）
@@ -75,6 +75,10 @@ CEAIR_ROUTES = [
     ("SHA", "SZX"), ("PVG", "SZX"),
     # 深圳 → 上海
     ("SZX", "SHA"), ("SZX", "PVG"),
+    # 上海 → 广州
+    ("SHA", "CAN"), ("PVG", "CAN"),
+    # 广州 → 上海
+    ("CAN", "SHA"), ("CAN", "PVG"),
 ]
 
 ROUTE_LABELS = {
@@ -90,6 +94,10 @@ ROUTE_LABELS = {
     "PKX-PVG": "北京大兴 → 浦东",
     "SZX-SHA": "深圳宝安 → 虹桥",
     "SZX-PVG": "深圳宝安 → 浦东",
+    "SHA-CAN": "虹桥 → 广州白云",
+    "PVG-CAN": "浦东 → 广州白云",
+    "CAN-SHA": "广州白云 → 虹桥",
+    "CAN-PVG": "广州白云 → 浦东",
 }
 
 
@@ -407,7 +415,7 @@ def generate_route_jsons():
             dep, arr = row.get("dep_airport", ""), row.get("arr_airport", "")
             if not dep or not arr: continue
             route = f"{dep}-{arr}"
-            # 只保留目标航线（上海↔北京/深圳）
+            # 只保留目标航线（上海↔北京/深圳/广州）
             if route not in ROUTE_LABELS:
                 continue
             records_by_route.setdefault(route, []).append({

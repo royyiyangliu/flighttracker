@@ -1,6 +1,326 @@
 [
   {
     "airline": "MU",
+    "flight_num": "2302",
+    "dep": "CAN",
+    "arr": "PVG",
+    "dep_time": "13:30",
+    "arr_time": "20:25"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "2312",
+    "dep": "CAN",
+    "arr": "PVG",
+    "dep_time": "12:15",
+    "arr_time": "20:25"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "2541",
+    "dep": "CAN",
+    "arr": "PVG",
+    "dep_time": "16:35",
+    "arr_time": "21:10"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "2818",
+    "dep": "CAN",
+    "arr": "PVG",
+    "dep_time": "10:50",
+    "arr_time": "20:30"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5252",
+    "dep": "CAN",
+    "arr": "PVG",
+    "dep_time": "11:50",
+    "arr_time": "18:25"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5256",
+    "dep": "CAN",
+    "arr": "PVG",
+    "dep_time": "12:00",
+    "arr_time": "18:25"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5288",
+    "dep": "CAN",
+    "arr": "PVG",
+    "dep_time": "10:40",
+    "arr_time": "19:50"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5318",
+    "dep": "CAN",
+    "arr": "PVG",
+    "dep_time": "20:00",
+    "arr_time": "22:20"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5326",
+    "dep": "CAN",
+    "arr": "PVG",
+    "dep_time": "18:50",
+    "arr_time": "21:20"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5328",
+    "dep": "CAN",
+    "arr": "PVG",
+    "dep_time": "09:00",
+    "arr_time": "11:25"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5362",
+    "dep": "CAN",
+    "arr": "PVG",
+    "dep_time": "17:30",
+    "arr_time": "19:40"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5732",
+    "dep": "CAN",
+    "arr": "PVG",
+    "dep_time": "11:25",
+    "arr_time": "19:10"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "6190",
+    "dep": "CAN",
+    "arr": "PVG",
+    "dep_time": "13:05",
+    "arr_time": "21:55"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "6302",
+    "dep": "CAN",
+    "arr": "PVG",
+    "dep_time": "07:25",
+    "arr_time": "14:50"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "6306",
+    "dep": "CAN",
+    "arr": "PVG",
+    "dep_time": "12:50",
+    "arr_time": "21:55"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "6308",
+    "dep": "CAN",
+    "arr": "PVG",
+    "dep_time": "15:15",
+    "arr_time": "21:55"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "6341",
+    "dep": "CAN",
+    "arr": "PVG",
+    "dep_time": "08:40",
+    "arr_time": "18:25"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "6733",
+    "dep": "CAN",
+    "arr": "PVG",
+    "dep_time": "06:40",
+    "arr_time": "12:35"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "6823",
+    "dep": "CAN",
+    "arr": "PVG",
+    "dep_time": "06:50",
+    "arr_time": "15:00"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "6955",
+    "dep": "CAN",
+    "arr": "PVG",
+    "dep_time": "06:50",
+    "arr_time": "15:40"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "8417",
+    "dep": "CAN",
+    "arr": "PVG",
+    "dep_time": "13:00",
+    "arr_time": "15:40"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "9690",
+    "dep": "CAN",
+    "arr": "PVG",
+    "dep_time": "16:25",
+    "arr_time": "01:10"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "9742",
+    "dep": "CAN",
+    "arr": "PVG",
+    "dep_time": "07:45",
+    "arr_time": "15:50"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "9768",
+    "dep": "CAN",
+    "arr": "PVG",
+    "dep_time": "23:00",
+    "arr_time": "08:25"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "9834",
+    "dep": "CAN",
+    "arr": "PVG",
+    "dep_time": "14:00",
+    "arr_time": "21:40"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "9869",
+    "dep": "CAN",
+    "arr": "PVG",
+    "dep_time": "08:30",
+    "arr_time": "17:00"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "4574",
+    "dep": "CAN",
+    "arr": "SHA",
+    "dep_time": "13:05",
+    "arr_time": "15:10"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5302",
+    "dep": "CAN",
+    "arr": "SHA",
+    "dep_time": "08:35",
+    "arr_time": "10:45"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5304",
+    "dep": "CAN",
+    "arr": "SHA",
+    "dep_time": "09:25",
+    "arr_time": "11:25"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5306",
+    "dep": "CAN",
+    "arr": "SHA",
+    "dep_time": "10:30",
+    "arr_time": "13:00"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5308",
+    "dep": "CAN",
+    "arr": "SHA",
+    "dep_time": "14:30",
+    "arr_time": "17:00"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5310",
+    "dep": "CAN",
+    "arr": "SHA",
+    "dep_time": "15:30",
+    "arr_time": "18:05"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5312",
+    "dep": "CAN",
+    "arr": "SHA",
+    "dep_time": "16:30",
+    "arr_time": "18:45"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5314",
+    "dep": "CAN",
+    "arr": "SHA",
+    "dep_time": "18:30",
+    "arr_time": "20:55"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5316",
+    "dep": "CAN",
+    "arr": "SHA",
+    "dep_time": "14:00",
+    "arr_time": "16:15"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5320",
+    "dep": "CAN",
+    "arr": "SHA",
+    "dep_time": "20:30",
+    "arr_time": "22:45"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5330",
+    "dep": "CAN",
+    "arr": "SHA",
+    "dep_time": "17:30",
+    "arr_time": "20:05"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "8416",
+    "dep": "CAN",
+    "arr": "SHA",
+    "dep_time": "12:30",
+    "arr_time": "14:50"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "8420",
+    "dep": "CAN",
+    "arr": "SHA",
+    "dep_time": "19:30",
+    "arr_time": "21:40"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "9200",
+    "dep": "CAN",
+    "arr": "SHA",
+    "dep_time": "21:30",
+    "arr_time": "23:35"
+  },
+  {
+    "airline": "MU",
     "flight_num": "5100",
     "dep": "PEK",
     "arr": "PVG",
@@ -705,19 +1025,211 @@
   },
   {
     "airline": "MU",
-    "flight_num": "5151",
+    "flight_num": "2504",
     "dep": "PVG",
-    "arr": "PEK",
-    "dep_time": "08:00",
-    "arr_time": "10:15"
+    "arr": "CAN",
+    "dep_time": "08:15",
+    "arr_time": "17:45"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "2504",
+    "dep": "PVG",
+    "arr": "CAN",
+    "dep_time": "08:15",
+    "arr_time": "17:45"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "2524",
+    "dep": "PVG",
+    "arr": "CAN",
+    "dep_time": "08:40",
+    "arr_time": "17:45"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "2524",
+    "dep": "PVG",
+    "arr": "CAN",
+    "dep_time": "08:40",
+    "arr_time": "17:45"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5129",
+    "dep": "PVG",
+    "arr": "CAN",
+    "dep_time": "09:15",
+    "arr_time": "17:55"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5129",
+    "dep": "PVG",
+    "arr": "CAN",
+    "dep_time": "09:15",
+    "arr_time": "17:55"
   },
   {
     "airline": "MU",
     "flight_num": "5151",
     "dep": "PVG",
-    "arr": "PEK",
+    "arr": "CAN",
     "dep_time": "08:00",
-    "arr_time": "10:15"
+    "arr_time": "18:15"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5151",
+    "dep": "PVG",
+    "arr": "CAN",
+    "dep_time": "08:00",
+    "arr_time": "18:15"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5195",
+    "dep": "PVG",
+    "arr": "CAN",
+    "dep_time": "18:00",
+    "arr_time": "01:15"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5311",
+    "dep": "PVG",
+    "arr": "CAN",
+    "dep_time": "16:20",
+    "arr_time": "18:45"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5325",
+    "dep": "PVG",
+    "arr": "CAN",
+    "dep_time": "22:25",
+    "arr_time": "00:55"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5329",
+    "dep": "PVG",
+    "arr": "CAN",
+    "dep_time": "13:30",
+    "arr_time": "15:50"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5383",
+    "dep": "PVG",
+    "arr": "CAN",
+    "dep_time": "11:30",
+    "arr_time": "21:10"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5419",
+    "dep": "PVG",
+    "arr": "CAN",
+    "dep_time": "11:35",
+    "arr_time": "20:30"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5511",
+    "dep": "PVG",
+    "arr": "CAN",
+    "dep_time": "10:50",
+    "arr_time": "16:50"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5691",
+    "dep": "PVG",
+    "arr": "CAN",
+    "dep_time": "09:05",
+    "arr_time": "17:20"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5820",
+    "dep": "PVG",
+    "arr": "CAN",
+    "dep_time": "11:55",
+    "arr_time": "21:10"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5824",
+    "dep": "PVG",
+    "arr": "CAN",
+    "dep_time": "07:10",
+    "arr_time": "15:10"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5840",
+    "dep": "PVG",
+    "arr": "CAN",
+    "dep_time": "13:50",
+    "arr_time": "21:10"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "6556",
+    "dep": "PVG",
+    "arr": "CAN",
+    "dep_time": "11:35",
+    "arr_time": "18:40"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "6863",
+    "dep": "PVG",
+    "arr": "CAN",
+    "dep_time": "06:25",
+    "arr_time": "16:25"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "8401",
+    "dep": "PVG",
+    "arr": "CAN",
+    "dep_time": "08:55",
+    "arr_time": "13:55"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "8414",
+    "dep": "PVG",
+    "arr": "CAN",
+    "dep_time": "09:00",
+    "arr_time": "11:30"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "8485",
+    "dep": "PVG",
+    "arr": "CAN",
+    "dep_time": "16:05",
+    "arr_time": "23:55"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "8487",
+    "dep": "PVG",
+    "arr": "CAN",
+    "dep_time": "11:30",
+    "arr_time": "21:10"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "9718",
+    "dep": "PVG",
+    "arr": "CAN",
+    "dep_time": "07:50",
+    "arr_time": "17:50"
   },
   {
     "airline": "MU",
@@ -777,22 +1289,6 @@
   },
   {
     "airline": "MU",
-    "flight_num": "2504",
-    "dep": "PVG",
-    "arr": "PKX",
-    "dep_time": "08:35",
-    "arr_time": "15:45"
-  },
-  {
-    "airline": "MU",
-    "flight_num": "2504",
-    "dep": "PVG",
-    "arr": "PKX",
-    "dep_time": "08:15",
-    "arr_time": "15:45"
-  },
-  {
-    "airline": "MU",
     "flight_num": "2512",
     "dep": "PVG",
     "arr": "PKX",
@@ -801,38 +1297,6 @@
   },
   {
     "airline": "MU",
-    "flight_num": "2524",
-    "dep": "PVG",
-    "arr": "PKX",
-    "dep_time": "08:40",
-    "arr_time": "15:45"
-  },
-  {
-    "airline": "MU",
-    "flight_num": "2524",
-    "dep": "PVG",
-    "arr": "PKX",
-    "dep_time": "08:40",
-    "arr_time": "15:45"
-  },
-  {
-    "airline": "MU",
-    "flight_num": "5129",
-    "dep": "PVG",
-    "arr": "PKX",
-    "dep_time": "09:15",
-    "arr_time": "11:20"
-  },
-  {
-    "airline": "MU",
-    "flight_num": "5129",
-    "dep": "PVG",
-    "arr": "PKX",
-    "dep_time": "09:15",
-    "arr_time": "11:20"
-  },
-  {
-    "airline": "MU",
     "flight_num": "5185",
     "dep": "PVG",
     "arr": "PKX",
@@ -846,22 +1310,6 @@
     "arr": "PKX",
     "dep_time": "22:00",
     "arr_time": "00:05"
-  },
-  {
-    "airline": "MU",
-    "flight_num": "5195",
-    "dep": "PVG",
-    "arr": "PKX",
-    "dep_time": "18:00",
-    "arr_time": "20:15"
-  },
-  {
-    "airline": "MU",
-    "flight_num": "5311",
-    "dep": "PVG",
-    "arr": "PKX",
-    "dep_time": "16:20",
-    "arr_time": "22:55"
   },
   {
     "airline": "MU",
@@ -878,14 +1326,6 @@
     "arr": "PKX",
     "dep_time": "14:40",
     "arr_time": "23:40"
-  },
-  {
-    "airline": "MU",
-    "flight_num": "5419",
-    "dep": "PVG",
-    "arr": "PKX",
-    "dep_time": "11:35",
-    "arr_time": "20:15"
   },
   {
     "airline": "MU",
@@ -918,14 +1358,6 @@
     "arr": "PKX",
     "dep_time": "06:25",
     "arr_time": "12:40"
-  },
-  {
-    "airline": "MU",
-    "flight_num": "6556",
-    "dep": "PVG",
-    "arr": "PKX",
-    "dep_time": "11:35",
-    "arr_time": "19:15"
   },
   {
     "airline": "MU",
@@ -969,27 +1401,11 @@
   },
   {
     "airline": "MU",
-    "flight_num": "8414",
-    "dep": "PVG",
-    "arr": "PKX",
-    "dep_time": "09:00",
-    "arr_time": "15:50"
-  },
-  {
-    "airline": "MU",
     "flight_num": "8453",
     "dep": "PVG",
     "arr": "PKX",
     "dep_time": "15:05",
     "arr_time": "23:40"
-  },
-  {
-    "airline": "MU",
-    "flight_num": "8485",
-    "dep": "PVG",
-    "arr": "PKX",
-    "dep_time": "16:05",
-    "arr_time": "22:25"
   },
   {
     "airline": "MU",
@@ -1169,14 +1585,6 @@
   },
   {
     "airline": "MU",
-    "flight_num": "5824",
-    "dep": "PVG",
-    "arr": "SZX",
-    "dep_time": "07:10",
-    "arr_time": "16:35"
-  },
-  {
-    "airline": "MU",
     "flight_num": "6039",
     "dep": "PVG",
     "arr": "SZX",
@@ -1193,27 +1601,11 @@
   },
   {
     "airline": "MU",
-    "flight_num": "6863",
-    "dep": "PVG",
-    "arr": "SZX",
-    "dep_time": "06:25",
-    "arr_time": "16:40"
-  },
-  {
-    "airline": "MU",
     "flight_num": "8357",
     "dep": "PVG",
     "arr": "SZX",
     "dep_time": "07:05",
     "arr_time": "14:10"
-  },
-  {
-    "airline": "MU",
-    "flight_num": "8401",
-    "dep": "PVG",
-    "arr": "SZX",
-    "dep_time": "08:55",
-    "arr_time": "16:40"
   },
   {
     "airline": "MU",
@@ -1233,11 +1625,219 @@
   },
   {
     "airline": "MU",
-    "flight_num": "9718",
-    "dep": "PVG",
-    "arr": "SZX",
-    "dep_time": "07:50",
-    "arr_time": "21:25"
+    "flight_num": "2160",
+    "dep": "SHA",
+    "arr": "CAN",
+    "dep_time": "15:45",
+    "arr_time": "21:55"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "2506",
+    "dep": "SHA",
+    "arr": "CAN",
+    "dep_time": "11:10",
+    "arr_time": "17:45"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "2506",
+    "dep": "SHA",
+    "arr": "CAN",
+    "dep_time": "11:10",
+    "arr_time": "17:45"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "2554",
+    "dep": "SHA",
+    "arr": "CAN",
+    "dep_time": "13:10",
+    "arr_time": "17:45"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "2554",
+    "dep": "SHA",
+    "arr": "CAN",
+    "dep_time": "13:10",
+    "arr_time": "17:45"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "4573",
+    "dep": "SHA",
+    "arr": "CAN",
+    "dep_time": "09:30",
+    "arr_time": "11:55"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5301",
+    "dep": "SHA",
+    "arr": "CAN",
+    "dep_time": "10:30",
+    "arr_time": "12:40"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5303",
+    "dep": "SHA",
+    "arr": "CAN",
+    "dep_time": "11:30",
+    "arr_time": "13:40"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5305",
+    "dep": "SHA",
+    "arr": "CAN",
+    "dep_time": "12:40",
+    "arr_time": "14:45"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5307",
+    "dep": "SHA",
+    "arr": "CAN",
+    "dep_time": "14:30",
+    "arr_time": "16:50"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5309",
+    "dep": "SHA",
+    "arr": "CAN",
+    "dep_time": "10:00",
+    "arr_time": "12:25"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5313",
+    "dep": "SHA",
+    "arr": "CAN",
+    "dep_time": "21:55",
+    "arr_time": "00:10"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5315",
+    "dep": "SHA",
+    "arr": "CAN",
+    "dep_time": "19:30",
+    "arr_time": "21:50"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5317",
+    "dep": "SHA",
+    "arr": "CAN",
+    "dep_time": "20:35",
+    "arr_time": "22:55"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5319",
+    "dep": "SHA",
+    "arr": "CAN",
+    "dep_time": "16:30",
+    "arr_time": "18:55"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5327",
+    "dep": "SHA",
+    "arr": "CAN",
+    "dep_time": "18:35",
+    "arr_time": "21:00"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5435",
+    "dep": "SHA",
+    "arr": "CAN",
+    "dep_time": "17:25",
+    "arr_time": "23:55"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5513",
+    "dep": "SHA",
+    "arr": "CAN",
+    "dep_time": "10:10",
+    "arr_time": "16:25"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5804",
+    "dep": "SHA",
+    "arr": "CAN",
+    "dep_time": "13:40",
+    "arr_time": "21:10"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "5814",
+    "dep": "SHA",
+    "arr": "CAN",
+    "dep_time": "08:15",
+    "arr_time": "15:10"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "6874",
+    "dep": "SHA",
+    "arr": "CAN",
+    "dep_time": "11:20",
+    "arr_time": "17:55"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "6874",
+    "dep": "SHA",
+    "arr": "CAN",
+    "dep_time": "11:20",
+    "arr_time": "17:55"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "6917",
+    "dep": "SHA",
+    "arr": "CAN",
+    "dep_time": "19:00",
+    "arr_time": "01:25"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "8359",
+    "dep": "SHA",
+    "arr": "CAN",
+    "dep_time": "16:20",
+    "arr_time": "21:55"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "8413",
+    "dep": "SHA",
+    "arr": "CAN",
+    "dep_time": "08:30",
+    "arr_time": "11:00"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "8418",
+    "dep": "SHA",
+    "arr": "CAN",
+    "dep_time": "15:55",
+    "arr_time": "18:05"
+  },
+  {
+    "airline": "MU",
+    "flight_num": "9199",
+    "dep": "SHA",
+    "arr": "CAN",
+    "dep_time": "17:30",
+    "arr_time": "20:00"
   },
   {
     "airline": "MU",
@@ -1457,22 +2057,6 @@
   },
   {
     "airline": "MU",
-    "flight_num": "2506",
-    "dep": "SHA",
-    "arr": "PKX",
-    "dep_time": "11:10",
-    "arr_time": "15:45"
-  },
-  {
-    "airline": "MU",
-    "flight_num": "2506",
-    "dep": "SHA",
-    "arr": "PKX",
-    "dep_time": "11:10",
-    "arr_time": "15:45"
-  },
-  {
-    "airline": "MU",
     "flight_num": "2510",
     "dep": "SHA",
     "arr": "PKX",
@@ -1486,30 +2070,6 @@
     "arr": "PKX",
     "dep_time": "16:25",
     "arr_time": "21:30"
-  },
-  {
-    "airline": "MU",
-    "flight_num": "2554",
-    "dep": "SHA",
-    "arr": "PKX",
-    "dep_time": "13:10",
-    "arr_time": "19:45"
-  },
-  {
-    "airline": "MU",
-    "flight_num": "2554",
-    "dep": "SHA",
-    "arr": "PKX",
-    "dep_time": "13:10",
-    "arr_time": "19:45"
-  },
-  {
-    "airline": "MU",
-    "flight_num": "4573",
-    "dep": "SHA",
-    "arr": "PKX",
-    "dep_time": "09:30",
-    "arr_time": "15:50"
   },
   {
     "airline": "MU",
@@ -1534,22 +2094,6 @@
     "arr": "PKX",
     "dep_time": "19:05",
     "arr_time": "21:10"
-  },
-  {
-    "airline": "MU",
-    "flight_num": "5301",
-    "dep": "SHA",
-    "arr": "PKX",
-    "dep_time": "10:30",
-    "arr_time": "18:25"
-  },
-  {
-    "airline": "MU",
-    "flight_num": "5303",
-    "dep": "SHA",
-    "arr": "PKX",
-    "dep_time": "11:30",
-    "arr_time": "18:25"
   },
   {
     "airline": "MU",
@@ -1585,35 +2129,11 @@
   },
   {
     "airline": "MU",
-    "flight_num": "5435",
-    "dep": "SHA",
-    "arr": "PKX",
-    "dep_time": "17:15",
-    "arr_time": "00:35"
-  },
-  {
-    "airline": "MU",
     "flight_num": "6803",
     "dep": "SHA",
     "arr": "PKX",
     "dep_time": "12:55",
     "arr_time": "19:15"
-  },
-  {
-    "airline": "MU",
-    "flight_num": "6874",
-    "dep": "SHA",
-    "arr": "PKX",
-    "dep_time": "11:20",
-    "arr_time": "13:25"
-  },
-  {
-    "airline": "MU",
-    "flight_num": "6874",
-    "dep": "SHA",
-    "arr": "PKX",
-    "dep_time": "11:20",
-    "arr_time": "13:25"
   },
   {
     "airline": "MU",
@@ -1638,30 +2158,6 @@
     "arr": "PKX",
     "dep_time": "12:50",
     "arr_time": "15:10"
-  },
-  {
-    "airline": "MU",
-    "flight_num": "8359",
-    "dep": "SHA",
-    "arr": "PKX",
-    "dep_time": "16:20",
-    "arr_time": "23:15"
-  },
-  {
-    "airline": "MU",
-    "flight_num": "8413",
-    "dep": "SHA",
-    "arr": "PKX",
-    "dep_time": "08:30",
-    "arr_time": "14:35"
-  },
-  {
-    "airline": "MU",
-    "flight_num": "8418",
-    "dep": "SHA",
-    "arr": "PKX",
-    "dep_time": "15:55",
-    "arr_time": "22:15"
   },
   {
     "airline": "MU",
@@ -1702,14 +2198,6 @@
     "arr": "PKX",
     "dep_time": "15:10",
     "arr_time": "22:25"
-  },
-  {
-    "airline": "MU",
-    "flight_num": "9199",
-    "dep": "SHA",
-    "arr": "PKX",
-    "dep_time": "17:30",
-    "arr_time": "00:05"
   },
   {
     "airline": "MU",
@@ -1838,14 +2326,6 @@
     "arr": "SZX",
     "dep_time": "21:30",
     "arr_time": "11:10"
-  },
-  {
-    "airline": "MU",
-    "flight_num": "5814",
-    "dep": "SHA",
-    "arr": "SZX",
-    "dep_time": "08:15",
-    "arr_time": "16:35"
   },
   {
     "airline": "MU",
