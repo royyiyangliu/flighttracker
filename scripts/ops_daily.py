@@ -561,8 +561,9 @@ def main():
                 if row is None or not is_complete(row):
                     task_set.add((f["airline"], f["flight_num"], d, dep))
             else:
-                # 仅回补：只重抓「已存在但到达仍为空」的行，不新抓从未记录过的
-                if row is not None and not is_complete(row):
+                # 回补窗口：重抓「已存在但到达仍为空」的行，以及「整行缺失」的
+                # （某天运行超时/中断导致整批漏抓时，可在窗口内自愈）
+                if row is None or not is_complete(row):
                     task_set.add((f["airline"], f["flight_num"], d, dep))
                     backfill_n += 1
 
