@@ -263,9 +263,11 @@ def parse_page_text(text: str) -> dict | None:
 
     r: dict = {k: None for k in CSV_COLS}
 
-    for s in ["Arrived", "Canceled", "Cancelled", "In Air", "Delayed", "Diverted", "Scheduled"]:
+    # 注意：FlightView 对晚到/跨天航班状态显示为 "Landed"（而非 "Arrived"），
+    # 归一为 Arrived；"Scheduled" 因页面到处有 "Scheduled Time:" 标签，必须放最后兜底。
+    for s in ["Arrived", "Landed", "Canceled", "Cancelled", "In Air", "Delayed", "Diverted", "Scheduled"]:
         if re.search(rf"\b{s}\b", text):
-            r["status"] = "Canceled" if s == "Cancelled" else s
+            r["status"] = {"Cancelled": "Canceled", "Landed": "Arrived"}.get(s, s)
             break
 
     if m := re.search(r"Aircraft[\t ]+(.+)", text):
@@ -288,7 +290,10 @@ def parse_page_text(text: str) -> dict | None:
             r["arr_airport"] = m.group(1)
         if m := re.search(r"Scheduled Time:[\t ]+" + _TIME_RE, a):
             r["arr_scheduled"] = to24h(m.group(1), m.group(2))
+        # 实际到达时刻：正常航班用 "At Gate Time"，晚到/跨天航班用 "Landed Time"
         if m := re.search(r"At Gate Time:[\t ]+" + _TIME_RE, a):
+            r["arr_actual"] = to24h(m.group(1), m.group(2))
+        elif m := re.search(r"Landed Time:[\t ]+" + _TIME_RE, a):
             r["arr_actual"] = to24h(m.group(1), m.group(2))
         if m := re.search(r"Terminal:[\t ]+(.+)", a):
             r["arr_terminal"] = m.group(1).strip()
