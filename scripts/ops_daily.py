@@ -53,6 +53,7 @@ CSV_FILE     = DATA_DIR / "flights.csv"
 AIRLINE  = "MU"
 MAX_CONC = 4      # 并发浏览器数
 REQ_DELAY = 2.0   # FlightView 请求间隔（秒）
+BACKFILL_DAYS = 3 # 回补窗口：每次运行重抓最近 N 天内「到达为空且非取消」的行
 
 CSV_COLS = [
     "date", "flight", "dep_airport", "arr_airport",
@@ -134,6 +135,7 @@ CEAIR_JS = r"""() => {
                 flightNo: fm[1] + fm[2],
                 depTime:  times[0] || null,
                 arrTime:  times[1] || null,
+                direct:   lines.includes('直达'),
             });
             break;
         }
@@ -206,7 +208,12 @@ async def discover_from_ceair(target_date: str) -> list[dict]:
                             log.warning(f"    两次超时，跳过")
 
                     raw = await page.evaluate(CEAIR_JS)
-                    found = [f for f in raw if f.get("flightNo", "").startswith("MU")]
+                    mu = [f for f in raw if f.get("flightNo", "").startswith("MU")]
+                    # 只保留直达航班：中转联程的分段航班号不属于本航线，丢弃
+                    found = [f for f in mu if f.get("direct")]
+                    dropped = len(mu) - len(found)
+                    if dropped:
+                        log.info(f"    过滤掉 {dropped} 个非直达(中转段)航班")
                     for f in found:
                         num = f["flightNo"][2:]
                         confirmed.append({
@@ -378,21 +385,43 @@ async def run_tasks(task_list: list[tuple], on_result=None) -> list[dict]:
 # Step 3: CSV + 前端 JSON
 # ──────────────────────────────────────────────────────────────
 
-def load_done() -> set[tuple]:
-    done = set()
+def csv_key(row: dict) -> tuple:
+    """CSV 行的唯一键：航班 + 计划起飞日 + 出发机场。"""
+    return (row["flight"], row["date"], row["dep_airport"])
+
+def load_csv_rows() -> dict:
+    """读入 flights.csv → {(flight,date,dep): row}。重复键保留更完整/更新的一条。"""
+    rows: dict[tuple, dict] = {}
     if CSV_FILE.exists():
         with open(CSV_FILE, encoding="utf-8") as f:
             for row in csv.DictReader(f):
-                done.add((row["flight"], row["date"]))
-    return done
+                k = csv_key(row)
+                old = rows.get(k)
+                # 已有同键：优先保留有到达时刻的、否则保留 scraped_at 更晚的
+                if old is None:
+                    rows[k] = row
+                elif not old.get("arr_actual") and row.get("arr_actual"):
+                    rows[k] = row
+                elif (old.get("arr_actual") == row.get("arr_actual")
+                      and row.get("scraped_at", "") > old.get("scraped_at", "")):
+                    rows[k] = row
+    return rows
 
-def append_csv(record: dict):
-    is_new = not CSV_FILE.exists()
-    with open(CSV_FILE, "a", newline="", encoding="utf-8") as f:
+def write_csv_rows(rows: dict):
+    """整表重写（按 日期→航班 排序，稳定输出）。"""
+    ordered = sorted(rows.values(), key=lambda r: (r["date"], r["flight"], r["dep_airport"]))
+    with open(CSV_FILE, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=CSV_COLS, extrasaction="ignore")
-        if is_new:
-            w.writeheader()
-        w.writerow(record)
+        w.writeheader()
+        w.writerows(ordered)
+
+def is_complete(row: dict) -> bool:
+    """该行是否已无需再抓：拿到实际到达时刻，或已取消/备降等终态。"""
+    if row.get("arr_actual"):
+        return True
+    if row.get("status") in ("Canceled", "Cancelled", "Diverted"):
+        return True
+    return False
 
 
 def shorten_aircraft(s: str) -> str:
@@ -502,26 +531,49 @@ def main():
 
     log.info(f"本次使用航班数：{len(flights)} 条")
 
-    # ── Step 2: 爬 FlightView 历史数据 ──
+    # ── Step 2: 爬 FlightView 数据（含最近 N 天缺失到达的回补）──
+    csv_rows = load_csv_rows()
     today = beijing_now().date()
-    dates = [
-        (today - timedelta(days=i)).strftime("%Y%m%d")
-        for i in range(1, args.days + 1)
-    ]
-    dates.reverse()
-    log.info(f"日期范围：{dates[0]} → {dates[-1]}（{len(dates)} 天）")
 
-    done = load_done()
-    task_list = [
-        (f["airline"], f["flight_num"], d, f["dep"])
-        for d in dates
-        for f in flights
-        if (f"{f['airline']}{f['flight_num']}", d) not in done
-    ]
-    log.info(f"待抓取：{len(task_list)} 个任务（已有 {len(done)} 条跳过）")
+    def dstr(i: int) -> str:
+        return (today - timedelta(days=i)).strftime("%Y%m%d")
+
+    normal_dates   = {dstr(i) for i in range(1, args.days + 1)}      # 正常抓取：昨天起回溯 args.days 天
+    backfill_dates = {dstr(i) for i in range(1, BACKFILL_DAYS + 1)}  # 回补窗口：最近 BACKFILL_DAYS 天
+    all_dates = sorted(normal_dates | backfill_dates)
+    log.info(f"正常抓取：{sorted(normal_dates)}；回补窗口：{sorted(backfill_dates)}")
+
+    # (airline, flight_num, date, dep)；用 set 天然按 (flight,date,dep) 去重，避免重复落盘
+    task_set: set[tuple] = set()
+    backfill_n = 0
+    for f in flights:
+        flight = f"{f['airline']}{f['flight_num']}"
+        dep    = f["dep"]
+        for d in all_dates:
+            row = csv_rows.get((flight, d, dep))
+            if d in normal_dates:
+                # 正常日期：缺行或未完成 → 抓
+                if row is None or not is_complete(row):
+                    task_set.add((f["airline"], f["flight_num"], d, dep))
+            else:
+                # 仅回补：只重抓「已存在但到达仍为空」的行，不新抓从未记录过的
+                if row is not None and not is_complete(row):
+                    task_set.add((f["airline"], f["flight_num"], d, dep))
+                    backfill_n += 1
+
+    task_list = sorted(task_set)
+    log.info(f"待抓取：{len(task_list)} 个任务（其中回补 {backfill_n} 个），"
+             f"现有 CSV {len(csv_rows)} 行")
+
+    def upsert(result: dict):
+        csv_rows[csv_key(result)] = result
 
     if task_list:
-        asyncio.run(run_tasks(task_list, on_result=append_csv))
+        asyncio.run(run_tasks(task_list, on_result=upsert))
+        write_csv_rows(csv_rows)
+        log.info(f"flights.csv 已写入：{len(csv_rows)} 行")
+    else:
+        log.info("无待抓取任务，跳过 FlightView 抓取")
 
     # ── Step 3: 生成前端 JSON ──
     log.info("生成前端 JSON 文件…")
