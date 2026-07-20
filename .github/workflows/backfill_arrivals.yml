@@ -1,0 +1,56 @@
+name: Backfill Missing Arrivals (one-time)
+
+on:
+  workflow_dispatch:
+    inputs:
+      since:
+        description: '只处理该日期(YYYYMMDD, 含)之后的行；留空=全部'
+        required: false
+        default: ''
+      limit:
+        description: '最多补爬条数；留空=不限'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install playwright
+          playwright install chromium --with-deps
+
+      - name: Run backfill
+        run: |
+          ARGS="--apply"
+          if [ -n "${{ github.event.inputs.since }}" ]; then ARGS="$ARGS --since ${{ github.event.inputs.since }}"; fi
+          if [ -n "${{ github.event.inputs.limit }}" ]; then ARGS="$ARGS --limit ${{ github.event.inputs.limit }}"; fi
+          echo "Running: python scripts/backfill_arrivals.py $ARGS"
+          python scripts/backfill_arrivals.py $ARGS
+
+      - name: Commit and push data
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -z "$(git status --porcelain data/ops/)" ]; then
+            echo "无数据变更，跳过提交"; exit 0
+          fi
+          git stash --include-untracked
+          git pull --rebase
+          git stash pop
+          git add data/ops/
+          git commit -m "ops: backfill missing arrivals $(date -u +'%Y-%m-%d')"
+          git push
