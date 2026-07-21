@@ -1,8 +1,16 @@
-name: Backfill Hong Kong Routes (one-time)
+name: Backfill History (one-time, generic)
 
 on:
   workflow_dispatch:
     inputs:
+      flights:
+        description: '指定航班号，逗号分隔（如 MU5100,MU5232,MU5361）'
+        required: false
+        default: ''
+      routes:
+        description: '指定航线，逗号分隔（如 SHA-HKG,PVG-HKG）'
+        required: false
+        default: ''
       days:
         description: '回溯天数（默认 100）'
         required: false
@@ -28,11 +36,13 @@ jobs:
           pip install playwright
           playwright install chromium --with-deps
 
-      - name: Run Hong Kong backfill
+      - name: Run history backfill
         run: |
-          DAYS=${{ github.event.inputs.days || '100' }}
-          echo "Running: python scripts/backfill_hkg.py --apply --days $DAYS"
-          python scripts/backfill_hkg.py --apply --days $DAYS
+          ARGS="--apply --days ${{ github.event.inputs.days || '100' }}"
+          if [ -n "${{ github.event.inputs.flights }}" ]; then ARGS="$ARGS --flights ${{ github.event.inputs.flights }}"; fi
+          if [ -n "${{ github.event.inputs.routes }}" ]; then ARGS="$ARGS --routes ${{ github.event.inputs.routes }}"; fi
+          echo "Running: python scripts/backfill_history.py $ARGS"
+          python scripts/backfill_history.py $ARGS
 
       - name: Commit and push data
         run: |
@@ -45,5 +55,5 @@ jobs:
           git pull --rebase
           git stash pop
           git add data/ops/
-          git commit -m "ops: backfill Hong Kong routes history $(date -u +'%Y-%m-%d')"
+          git commit -m "ops: backfill history $(date -u +'%Y-%m-%d')"
           git push
