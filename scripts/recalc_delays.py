@@ -26,6 +26,14 @@ ROUTE_LABELS = {
     "SZX-PVG": "深圳 → 浦东",
     "SHA-SZX": "虹桥 → 深圳",
     "SZX-SHA": "深圳 → 虹桥",
+    "SHA-CAN": "虹桥 → 广州白云",
+    "PVG-CAN": "浦东 → 广州白云",
+    "CAN-SHA": "广州白云 → 虹桥",
+    "CAN-PVG": "广州白云 → 浦东",
+    "SHA-HKG": "虹桥 → 香港",
+    "PVG-HKG": "浦东 → 香港",
+    "HKG-SHA": "香港 → 虹桥",
+    "HKG-PVG": "香港 → 浦东",
 }
 
 

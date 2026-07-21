@@ -398,9 +398,17 @@ const CITY_PAIRS = [
     routes:['CAN-SHA','CAN-PVG'],
     dep:[{c:'CAN',n:'白云'}],
     arr:[{c:'SHA',n:'虹桥'},{c:'PVG',n:'浦东'}] },
+  { id:'SH-HK', label:'上海 → 香港',
+    routes:['SHA-HKG','PVG-HKG'],
+    dep:[{c:'SHA',n:'虹桥'},{c:'PVG',n:'浦东'}],
+    arr:[{c:'HKG',n:'香港'}] },
+  { id:'HK-SH', label:'香港 → 上海',
+    routes:['HKG-SHA','HKG-PVG'],
+    dep:[{c:'HKG',n:'香港'}],
+    arr:[{c:'SHA',n:'虹桥'},{c:'PVG',n:'浦东'}] },
 ];
 
-const SHORT = {SHA:'虹桥',PVG:'浦东',PEK:'首都',PKX:'大兴',SZX:'宝安',CAN:'白云'};
+const SHORT = {SHA:'虹桥',PVG:'浦东',PEK:'首都',PKX:'大兴',SZX:'宝安',CAN:'白云',HKG:'香港'};
 
 let opsData    = {};
 let pair       = null;

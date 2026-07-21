@@ -80,6 +80,10 @@ CEAIR_ROUTES = [
     ("SHA", "CAN"), ("PVG", "CAN"),
     # 广州 → 上海
     ("CAN", "SHA"), ("CAN", "PVG"),
+    # 上海 → 香港
+    ("SHA", "HKG"), ("PVG", "HKG"),
+    # 香港 → 上海
+    ("HKG", "SHA"), ("HKG", "PVG"),
 ]
 
 ROUTE_LABELS = {
@@ -99,6 +103,10 @@ ROUTE_LABELS = {
     "PVG-CAN": "浦东 → 广州白云",
     "CAN-SHA": "广州白云 → 虹桥",
     "CAN-PVG": "广州白云 → 浦东",
+    "SHA-HKG": "虹桥 → 香港",
+    "PVG-HKG": "浦东 → 香港",
+    "HKG-SHA": "香港 → 虹桥",
+    "HKG-PVG": "香港 → 浦东",
 }
 
 
