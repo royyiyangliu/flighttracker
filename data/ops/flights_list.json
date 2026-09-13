@@ -69,7 +69,7 @@
     "dep": "CAN",
     "arr": "SHA",
     "dep_time": "10:30",
-    "arr_time": "13:00"
+    "arr_time": "12:40"
   },
   {
     "airline": "MU",
@@ -77,7 +77,7 @@
     "dep": "CAN",
     "arr": "SHA",
     "dep_time": "14:30",
-    "arr_time": "17:00"
+    "arr_time": "16:55"
   },
   {
     "airline": "MU",
@@ -93,7 +93,7 @@
     "dep": "CAN",
     "arr": "SHA",
     "dep_time": "16:30",
-    "arr_time": "18:50"
+    "arr_time": "19:00"
   },
   {
     "airline": "MU",
@@ -101,7 +101,7 @@
     "dep": "CAN",
     "arr": "SHA",
     "dep_time": "18:30",
-    "arr_time": "20:55"
+    "arr_time": "21:00"
   },
   {
     "airline": "MU",
@@ -269,7 +269,7 @@
     "dep": "PEK",
     "arr": "PVG",
     "dep_time": "14:30",
-    "arr_time": "16:55"
+    "arr_time": "17:10"
   },
   {
     "airline": "MU",
@@ -429,7 +429,7 @@
     "dep": "PKX",
     "arr": "PVG",
     "dep_time": "19:45",
-    "arr_time": "21:55"
+    "arr_time": "22:05"
   },
   {
     "airline": "MU",
@@ -660,7 +660,7 @@
     "flight_num": "5129",
     "dep": "PVG",
     "arr": "PKX",
-    "dep_time": "09:15",
+    "dep_time": "09:05",
     "arr_time": "11:20"
   },
   {
@@ -852,8 +852,8 @@
     "flight_num": "8629",
     "dep": "SHA",
     "arr": "HKG",
-    "dep_time": "15:00",
-    "arr_time": "17:40"
+    "dep_time": "17:30",
+    "arr_time": "20:05"
   },
   {
     "airline": "MU",
@@ -1060,7 +1060,7 @@
     "flight_num": "5335",
     "dep": "SHA",
     "arr": "SZX",
-    "dep_time": "09:55",
+    "dep_time": "10:05",
     "arr_time": "12:25"
   },
   {
@@ -1117,15 +1117,15 @@
     "dep": "SHA",
     "arr": "SZX",
     "dep_time": "19:00",
-    "arr_time": "21:30"
+    "arr_time": "21:25"
   },
   {
     "airline": "MU",
     "flight_num": "5357",
     "dep": "SHA",
     "arr": "SZX",
-    "dep_time": "21:20",
-    "arr_time": "00:05"
+    "dep_time": "20:30",
+    "arr_time": "23:00"
   },
   {
     "airline": "MU",
@@ -1213,7 +1213,7 @@
     "dep": "SZX",
     "arr": "SHA",
     "dep_time": "16:30",
-    "arr_time": "18:55"
+    "arr_time": "19:00"
   },
   {
     "airline": "MU",
