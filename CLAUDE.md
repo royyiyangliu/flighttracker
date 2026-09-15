@@ -26,6 +26,10 @@ index.html（静态页）← fetch 读取上述 JSON（带 ?v=时间戳 绕缓�
 - 存储为**时序压缩格式**：`timestamps[]`（UTC 整点）+ `prices{航班号:[价格数组]}` + `flight_info{}`，各价格数组与时间戳等长，新航班补 null 占位；同一整点重跑覆盖而非追加。
 - 定时：`.github/workflows/daily_update.yml`，每天北京时间 10:00、22:00。
 
+**当前状态（2026-09-15 起）**：`config.json` 的 `queries` 已清空（之前监控的两条航线出发日期已过期）。workflow 仍按计划运行，但脚本遍历空数组后直接退出，不抓取、不产生 commit；前端票价 tab 显示"尚未配置任何航线"。旧的 `data/history/*.json` 历史文件保留未删除。
+
+**以后要追踪新航线**：在 `config.json` 的 `queries` 数组里加一条新对象（字段格式同上，`outbound_date`/`return_date` 用未来日期），下次定时任务或手动 `workflow_dispatch` 触发即会自动开始抓取，无需改动脚本或 workflow。
+
 ## 运营线
 
 `ops_daily.py` 三步：
