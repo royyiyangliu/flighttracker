@@ -219,6 +219,11 @@ async def discover_from_ceair(target_date: str) -> list[dict]:
                     mu = [f for f in raw if f.get("flightNo", "").startswith("MU")]
                     # 只保留直达航班：中转联程的分段航班号不属于本航线，丢弃
                     found = [f for f in mu if f.get("direct")]
+                    if not found and attempt == 0:
+                        # 低价日历价格可能先于航班列表渲染，导致提取为空
+                        log.warning("    提取为 0 班，8秒后重试…")
+                        await asyncio.sleep(8)
+                        continue
                     dropped = len(mu) - len(found)
                     if dropped:
                         log.info(f"    过滤掉 {dropped} 个非直达(中转段)航班")
