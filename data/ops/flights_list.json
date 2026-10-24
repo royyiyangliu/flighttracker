@@ -5,15 +5,15 @@
     "dep": "CAN",
     "arr": "PVG",
     "dep_time": "13:00",
-    "arr_time": "14:55"
+    "arr_time": "15:00"
   },
   {
     "airline": "MU",
     "flight_num": "5318",
     "dep": "CAN",
     "arr": "PVG",
-    "dep_time": "20:00",
-    "arr_time": "22:20"
+    "dep_time": "20:10",
+    "arr_time": "22:40"
   },
   {
     "airline": "MU",
@@ -173,7 +173,7 @@
     "dep": "CAN",
     "arr": "SHA",
     "dep_time": "17:30",
-    "arr_time": "20:05"
+    "arr_time": "19:40"
   },
   {
     "airline": "MU",
@@ -252,7 +252,7 @@
     "flight_num": "726",
     "dep": "HKG",
     "arr": "PVG",
-    "dep_time": "07:30",
+    "dep_time": "07:40",
     "arr_time": "10:25"
   },
   {
@@ -572,8 +572,8 @@
     "flight_num": "8229",
     "dep": "PKX",
     "arr": "SHA",
-    "dep_time": "16:30",
-    "arr_time": "18:40"
+    "dep_time": "17:30",
+    "arr_time": "19:35"
   },
   {
     "airline": "MU",
@@ -620,7 +620,7 @@
     "flight_num": "5329",
     "dep": "PVG",
     "arr": "CAN",
-    "dep_time": "13:35",
+    "dep_time": "13:30",
     "arr_time": "16:15"
   },
   {
@@ -660,8 +660,8 @@
     "flight_num": "507",
     "dep": "PVG",
     "arr": "HKG",
-    "dep_time": "11:10",
-    "arr_time": "14:05"
+    "dep_time": "11:35",
+    "arr_time": "14:25"
   },
   {
     "airline": "MU",
@@ -708,8 +708,8 @@
     "flight_num": "8595",
     "dep": "PVG",
     "arr": "HKG",
-    "dep_time": "09:40",
-    "arr_time": "12:45"
+    "dep_time": "09:50",
+    "arr_time": "12:40"
   },
   {
     "airline": "MU",
@@ -740,7 +740,7 @@
     "flight_num": "5163",
     "dep": "PVG",
     "arr": "PEK",
-    "dep_time": "19:15",
+    "dep_time": "19:05",
     "arr_time": "21:50"
   },
   {
@@ -1153,6 +1153,14 @@
   },
   {
     "airline": "MU",
+    "flight_num": "5167",
+    "dep": "SHA",
+    "arr": "PKX",
+    "dep_time": "10:30",
+    "arr_time": "12:40"
+  },
+  {
+    "airline": "MU",
     "flight_num": "5183",
     "dep": "SHA",
     "arr": "PKX",
@@ -1165,7 +1173,7 @@
     "dep": "SHA",
     "arr": "PKX",
     "dep_time": "17:10",
-    "arr_time": "19:25"
+    "arr_time": "19:30"
   },
   {
     "airline": "MU",
@@ -1301,7 +1309,7 @@
     "dep": "SHA",
     "arr": "SZX",
     "dep_time": "20:30",
-    "arr_time": "23:15"
+    "arr_time": "23:10"
   },
   {
     "airline": "MU",
@@ -1389,7 +1397,7 @@
     "dep": "SZX",
     "arr": "SHA",
     "dep_time": "13:05",
-    "arr_time": "15:15"
+    "arr_time": "15:05"
   },
   {
     "airline": "MU",
