@@ -221,7 +221,7 @@
     "dep": "HKG",
     "arr": "PVG",
     "dep_time": "15:25",
-    "arr_time": "18:00"
+    "arr_time": "17:55"
   },
   {
     "airline": "MU",
@@ -365,7 +365,7 @@
     "dep": "PEK",
     "arr": "SHA",
     "dep_time": "11:00",
-    "arr_time": "13:00"
+    "arr_time": "12:55"
   },
   {
     "airline": "MU",
@@ -789,7 +789,7 @@
     "dep": "PVG",
     "arr": "PKX",
     "dep_time": "08:30",
-    "arr_time": "10:55"
+    "arr_time": "11:00"
   },
   {
     "airline": "MU",
@@ -932,8 +932,8 @@
     "flight_num": "5319",
     "dep": "SHA",
     "arr": "CAN",
-    "dep_time": "22:30",
-    "arr_time": "01:05"
+    "dep_time": "22:05",
+    "arr_time": "00:40"
   },
   {
     "airline": "MU",
@@ -1165,7 +1165,7 @@
     "dep": "SHA",
     "arr": "PKX",
     "dep_time": "19:20",
-    "arr_time": "21:25"
+    "arr_time": "21:30"
   },
   {
     "airline": "MU",
