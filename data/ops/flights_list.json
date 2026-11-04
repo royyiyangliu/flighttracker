@@ -12,8 +12,8 @@
     "flight_num": "5318",
     "dep": "CAN",
     "arr": "PVG",
-    "dep_time": "20:10",
-    "arr_time": "22:40"
+    "dep_time": "20:30",
+    "arr_time": "22:55"
   },
   {
     "airline": "MU",
@@ -365,7 +365,7 @@
     "dep": "PEK",
     "arr": "SHA",
     "dep_time": "11:00",
-    "arr_time": "12:55"
+    "arr_time": "13:00"
   },
   {
     "airline": "MU",
@@ -484,8 +484,8 @@
     "flight_num": "5130",
     "dep": "PKX",
     "arr": "PVG",
-    "dep_time": "20:30",
-    "arr_time": "22:40"
+    "dep_time": "19:30",
+    "arr_time": "21:40"
   },
   {
     "airline": "MU",
@@ -501,7 +501,7 @@
     "dep": "PKX",
     "arr": "PVG",
     "dep_time": "12:55",
-    "arr_time": "15:00"
+    "arr_time": "15:10"
   },
   {
     "airline": "MU",
@@ -604,8 +604,8 @@
     "flight_num": "5311",
     "dep": "PVG",
     "arr": "CAN",
-    "dep_time": "16:40",
-    "arr_time": "19:00"
+    "dep_time": "16:50",
+    "arr_time": "19:25"
   },
   {
     "airline": "MU",
@@ -620,7 +620,7 @@
     "flight_num": "5329",
     "dep": "PVG",
     "arr": "CAN",
-    "dep_time": "13:30",
+    "dep_time": "13:35",
     "arr_time": "16:15"
   },
   {
@@ -652,7 +652,7 @@
     "flight_num": "505",
     "dep": "PVG",
     "arr": "HKG",
-    "dep_time": "15:20",
+    "dep_time": "15:10",
     "arr_time": "18:15"
   },
   {
@@ -789,7 +789,7 @@
     "dep": "PVG",
     "arr": "PKX",
     "dep_time": "08:30",
-    "arr_time": "11:00"
+    "arr_time": "10:55"
   },
   {
     "airline": "MU",
@@ -932,8 +932,8 @@
     "flight_num": "5319",
     "dep": "SHA",
     "arr": "CAN",
-    "dep_time": "22:05",
-    "arr_time": "00:40"
+    "dep_time": "22:30",
+    "arr_time": "01:05"
   },
   {
     "airline": "MU",
@@ -1165,7 +1165,7 @@
     "dep": "SHA",
     "arr": "PKX",
     "dep_time": "19:20",
-    "arr_time": "21:30"
+    "arr_time": "21:25"
   },
   {
     "airline": "MU",
@@ -1333,7 +1333,7 @@
     "dep": "SZX",
     "arr": "PVG",
     "dep_time": "07:30",
-    "arr_time": "10:00"
+    "arr_time": "09:55"
   },
   {
     "airline": "MU",
