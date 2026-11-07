@@ -5,7 +5,7 @@
     "dep": "CAN",
     "arr": "PVG",
     "dep_time": "13:00",
-    "arr_time": "14:55"
+    "arr_time": "15:00"
   },
   {
     "airline": "MU",
@@ -620,7 +620,7 @@
     "flight_num": "5329",
     "dep": "PVG",
     "arr": "CAN",
-    "dep_time": "13:35",
+    "dep_time": "13:30",
     "arr_time": "16:15"
   },
   {
@@ -1173,7 +1173,7 @@
     "dep": "SHA",
     "arr": "PKX",
     "dep_time": "17:10",
-    "arr_time": "19:25"
+    "arr_time": "19:30"
   },
   {
     "airline": "MU",
